@@ -47,8 +47,8 @@ output/
 gate1_answers.json
 gate2_answers.json
 
-# Dependency lock (optional — uncomment to commit it)
-# uv.lock
+# Dependency lock (regenerate with `uv sync`)
+uv.lock
 
 # Logs
 *.log
