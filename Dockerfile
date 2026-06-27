@@ -31,7 +31,7 @@ FROM python:3.13-slim AS runtime
 
 LABEL maintainer="Rolex Alexander <rolexalexander67@gmail.com>"
 LABEL description="Plinth — Turns discovery into a foundation downstream agents can build on"
-LABEL org.opencontainers.image.source="https://github.com/yourusername/plinth"
+LABEL org.opencontainers.image.source="https://github.com/RolexAlexander/plinth"
 LABEL org.opencontainers.image.license="MIT"
 
 WORKDIR /app

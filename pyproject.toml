@@ -33,8 +33,8 @@ kickoff = "requirements_crew.main:kickoff"
 plot = "requirements_crew.main:plot"
 
 [project.urls]
-Repository = "https://github.com/yourusername/plinth"
-Issues = "https://github.com/yourusername/plinth/issues"
+Repository = "https://github.com/RolexAlexander/plinth"
+Issues = "https://github.com/RolexAlexander/plinth/issues"
 
 [build-system]
 requires = ["hatchling"]

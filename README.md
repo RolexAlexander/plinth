@@ -58,7 +58,7 @@ Plinth runs as a **CrewAI Flow** orchestrating specialized agent crews:
 ### Install
 
 ```bash
-git clone https://github.com/yourusername/plinth.git
+git clone https://github.com/RolexAlexander/plinth.git
 cd plinth
 uv sync
 ```
