@@ -1,0 +1,21 @@
+llm:
+  default_model: "gemini/gemini-3.5-flash" # Use Pro
+  render_model: "gemini/gemini-3.5-flash"
+
+client_proxy:
+  mode: auto                # on | off | auto
+  grounding_threshold: 1500 # min chars of source material for `auto` to activate the proxy; below this it abstains
+
+actor_critic:
+  max_rounds: 3             # hard cap on revise loops
+  stop_on: no_new_material_objections   # never "critic is satisfied"
+
+research:
+  enabled: true
+  allowed_query_types: [compliance, domain_terminology, comparable_features]  # hard scope; reject others
+
+validation:
+  orphan_check: warn        # warn | fail
+
+io:
+  output_dir: ./output

@@ -1,0 +1,155 @@
+extract_statements:
+  description: >
+    Analyze the raw discovery input transcript:
+    ---
+    {transcript}
+    ---
+    
+    Identify and extract every distinct stakeholder statement.
+    For each statement:
+    1. Identify the origin as 'transcript'.
+    2. Set 'ref' to the filename (e.g. 'sample_transcript.txt') optionally with lines if known.
+    3. Extract the exact 'excerpt' (quote).
+    
+    You must be highly faithful to the text. Do not summarize, generalise, infer, or embellish. If it is not explicitly stated in the transcript, do not extract it.
+  expected_output: >
+    A list of Source objects representing raw stakeholder statements.
+  agent: intake_analyst
+
+draft_brief_and_requirements:
+  description: >
+    Based on the extracted stakeholder statements, draft a project brief and requirements.
+    
+    1. Draft the Project Brief containing:
+       - project_name
+       - vision
+       - goals (list of goals)
+       - scope (list of scope items)
+       - out_of_scope (list of out of scope items)
+       - success_criteria (list of success criteria)
+       
+    2. Convert stakeholder statements into clear, testable, individually traceable requirements.
+       For each requirement, you must strictly adhere to the following schema constraints:
+       - Assign an ID in the format REQ-001, REQ-002, etc. (strictly REQ-\d+).
+       - Select its type: functional, non_functional, business_rule, or constraint (strictly lowercase).
+       - If it is a non-functional requirement, you MUST define a quantified 'metric' containing dimension (e.g. latency, availability) and target (e.g. 'p95 < 2s'). The target must NOT be empty.
+       - Trace each requirement to its sources:
+         - If it directly traces to a stakeholder statement, set its status to 'confirmed' and attach the Source record.
+         - If the requirement is inferred by you (not explicitly stated by the stakeholder), you MUST set its status to 'assumed' or 'open' and set its source origin to 'analyst_inference'.
+         - REMEMBER the core safety rule: A requirement can ONLY be 'confirmed' if it has at least one source whose origin is 'transcript', 'intake', or 'human_answer' (strictly lowercase). An inference can only ever be 'assumed' or 'open'.
+       - For every confirmed functional requirement, you MUST define at least one acceptance criterion. Acceptance criterion IDs must match the pattern AC-\d+-[a-z] (strictly AC-\d+-[a-z], e.g. AC-001-a).
+       - Define dependencies using 'depends_on' (list of REQ IDs).
+       - Select its priority: must, should, could, wont (strictly lowercase MoSCoW values, do NOT use 'High', 'Medium', or 'Low').
+  expected_output: >
+    A project brief and a list of structured requirements.
+  agent: requirements_analyst
+
+build_personas:
+  description: >
+    Read the raw transcript:
+    ---
+    {transcript}
+    ---
+    
+    Identify user types, their goals, pain points, and permissions.
+    Build structured personas representing these users.
+    For each persona:
+    - ID in pattern PERS-\d+.
+    - Specify name, role, goals, pains, permissions.
+    If you identify any gaps or unanswered details about a persona, list them as OpenQuestions.
+    Each OpenQuestion must follow these rules:
+    - id must match pattern OQ-\d+ (strictly OQ-\d+, e.g. OQ-001).
+    - synthetic_origin must be set to 'analyst_inference' or 'intake'.
+    - default_if_deferred must be exactly one of: adopt_assumption, leave_open, drop_scope.
+    - affects must only contain valid Requirement IDs (matching pattern REQ-\d+), never Persona IDs (such as PERS-001). If it only affects a persona, leave the affects list empty ([]).
+  expected_output: >
+    A list of Persona objects and any related OpenQuestions for identified gaps.
+  agent: user_researcher
+
+generate_clarifying_questions:
+  description: >
+    Review the drafted requirements, project brief, and personas against the transcript.
+    Identify gaps, ambiguities, and critical questions.
+    For each clarifying question:
+    - ID in pattern OQ-\d+.
+    - Set blocking flag: mark 'blocking: true' if resolving it differently would change the data model, permission/authz model, external integrations/contracts, or any must-priority requirement. Otherwise 'blocking: false'.
+    - Provide a blocking_rationale if blocking is true.
+    - Set synthetic_origin to 'analyst_inference'.
+    - List the requirement IDs it affects in 'affects'.
+    - Propose a default assumption in 'proposed_assumption' and set 'default_if_deferred' (adopt_assumption, leave_open, drop_scope).
+  expected_output: >
+    A list of OpenQuestion objects.
+  agent: requirements_analyst
+
+author_srs:
+  description: >
+    Refine and assemble the confirmed and assumed requirements into a complete, consistent SRS structure.
+    Enforce rule R2: non-functional requirements must carry quantified metrics.
+    Only confirmed and assumed requirements can be finalized; do not include unconfirmed inferences or open questions in the requirements list.
+    
+    You must strictly adhere to the following schema constraints:
+    - Requirement IDs must match pattern REQ-\d+ (strictly REQ-\d+, e.g. REQ-001).
+    - Requirement type must be exactly one of: functional, non_functional, business_rule, constraint (strictly lowercase).
+    - Requirement status must be exactly one of: confirmed, assumed, open, deprecated (strictly lowercase).
+    - REMEMBER the core safety rule (Rule R1): A requirement can ONLY be 'confirmed' if it has at least one source whose origin is 'transcript', 'intake', or 'human_answer'. If all sources have origin 'analyst_inference', 'research', or 'client_proxy', the requirement status MUST be 'assumed' or 'open', never 'confirmed'.
+    - Requirement priority must be exactly one of: must, should, could, wont (strictly lowercase).
+    - Source origin must be exactly one of: transcript, intake, human_answer, analyst_inference, research, client_proxy, reviewer (strictly lowercase).
+    - Acceptance Criterion IDs must match pattern AC-\d+-[a-z] (strictly AC-\d+-[a-z], e.g. AC-001-a).
+  expected_output: >
+    An updated list of Requirement objects.
+  agent: srs_writer
+
+model_domain:
+  description: >
+    Produce a field-level domain model (entities, attributes, and relationships) from the confirmed requirements.
+    For each entity:
+    - ID in pattern ENT-<Name> (e.g. ENT-User).
+    - Attributes (name, type, nullability).
+    - Relationships (to another entity ID, kind, and optional via attribute).
+    Be extremely precise because downstream systems generate database schemas from your domain model.
+  expected_output: >
+    A list of DomainEntity objects.
+  agent: domain_modeler
+
+author_diagrams:
+  description: >
+    Create human-facing Mermaid diagrams (sequence, activity, or use-case diagram strings) for the key system workflows.
+    Do not author a class diagram (as it is generated automatically from the domain model). Ensure all diagrams have valid Mermaid syntax and do not introduce entities that are not in the domain model.
+  expected_output: >
+    Mermaid behavioral diagram strings.
+  agent: uml_architect
+
+qa_review:
+  description: >
+    Perform a quality assurance review of the drafted SRS (requirements, stories, and domain model).
+    Identify ambiguities, contradictions, missing edge cases, or acceptance criteria that do not properly test their requirement statements.
+    Output structured findings with severity ('block' or 'info'), kind, target_id, and note.
+  expected_output: >
+    A list of QA findings.
+  agent: requirements_reviewer
+
+proxy_review:
+  description: >
+    Embody the stakeholder from the transcript and review the SRS.
+    Identify where the specification misses what the stakeholder wanted or implied.
+    objections must cite the transcript reference if grounded. Inferred objections should be raised as OpenQuestions.
+    Each OpenQuestion must follow these rules:
+    - id must match pattern OQ-\d+ (strictly OQ-\d+, e.g. OQ-001).
+    - synthetic_origin must be set to 'client_proxy'.
+    - default_if_deferred must be exactly one of: adopt_assumption, leave_open, drop_scope.
+  expected_output: >
+    Grounded objections and proposed open questions.
+  agent: client_proxy
+
+research_context:
+  description: >
+    Search the web for compliance requirements, domain terminology, and comparable feature sets.
+    You MUST limit your search queries to categories: compliance, domain_terminology, comparable_features.
+    Any findings must be output as OpenQuestion suggestions to be reviewed, never as requirements directly.
+    Each OpenQuestion must follow these rules:
+    - id must match pattern OQ-\d+ (strictly OQ-\d+, e.g. OQ-001).
+    - synthetic_origin must be set to 'research'.
+    - default_if_deferred must be exactly one of: adopt_assumption, leave_open, drop_scope.
+  expected_output: >
+    A list of OpenQuestion objects.
+  agent: researcher

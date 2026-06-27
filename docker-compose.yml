@@ -1,0 +1,21 @@
+services:
+  plinth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plinth
+    env_file:
+      - .env
+    volumes:
+      # Mount your transcript (override the default sample)
+      # - ./my_transcript.txt:/app/tests/sample_transcript.txt:ro
+
+      # Mount config overrides
+      - ./config.yaml:/app/config.yaml:ro
+
+      # Collect output on the host
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true    # Required for human-in-the-loop gates
+    tty: true           # Required for interactive gate prompts

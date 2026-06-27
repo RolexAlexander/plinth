@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# CrewAI
+*.db
+
+# Output (generated at runtime — not committed)
+output/
+
+# Gate answer files (generated at runtime)
+gate1_answers.json
+gate2_answers.json
+
+# Dependency lock (optional — uncomment to commit it)
+# uv.lock
+
+# Logs
+*.log
+logs/
