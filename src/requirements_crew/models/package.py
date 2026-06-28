@@ -4,6 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 from .enums import Priority
 from .records import Requirement, OpenQuestion, AcceptanceCriterion
+from .sources import SourceRegistry
 
 class UserStory(BaseModel):
     id: str                          # US-\d+
@@ -27,7 +28,9 @@ class Persona(BaseModel):
     id: str                          # PERS-\d+
     name: str
     role: str
+    role_excerpt: Optional[str] = None
     goals: List[str] = Field(default_factory=list)
+    goals_excerpts: List[str] = Field(default_factory=list)
     pains: List[str] = Field(default_factory=list)
     permissions: List[str] = Field(default_factory=list)
 
@@ -47,6 +50,16 @@ class Relationship(BaseModel):
     to: str                          # ENT id
     kind: str                        # one_to_one | one_to_many | many_to_one | many_to_many
     via: Optional[str] = None           # attribute name
+
+    @field_validator("kind")
+    @classmethod
+    def validate_kind(cls, v: str) -> str:
+        allowed = {"one_to_one", "one_to_many", "many_to_one", "many_to_many"}
+        # Map hyphens to underscores to standardise
+        v_std = v.replace("-", "_").lower()
+        if v_std not in allowed:
+            raise ValueError(f"Relationship kind must be one of {allowed}: {v}")
+        return v_std
 
 class DomainEntity(BaseModel):
     id: str                          # ENT-<Name>
@@ -95,3 +108,5 @@ class RequirementsPackage(BaseModel):
     package_version: str = "0.1.0"
     generated_at: Optional[datetime] = None
     source_provenance: List[str] = Field(default_factory=list)     # input filenames
+    candidate_statement_count: int = 0
+    source_registry: SourceRegistry = Field(default_factory=SourceRegistry)

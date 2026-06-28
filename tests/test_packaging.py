@@ -187,7 +187,17 @@ def test_manifest_ready_for_with_orphans():
             vision="A test vision"
         ),
         requirements=[req],
-        user_stories=[], # Empty, so REQ-001 is an orphan
+        user_stories=[
+            UserStory(
+                id="US-001",
+                epic="Auth Epic",
+                as_a="user",
+                i_want="login",
+                so_that="access",
+                requirement_ids=[], # Empty, so REQ-001 is still an orphan
+                priority=Priority.must
+            )
+        ],
         domain_entities=[],
         open_questions=[]
     )

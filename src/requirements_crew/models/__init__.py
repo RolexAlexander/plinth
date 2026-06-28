@@ -24,6 +24,10 @@ from .package import (
     ProjectBrief,
     RequirementsPackage,
 )
+from .sources import (
+    SourceDocument,
+    SourceRegistry,
+)
 from .outputs import (
     SourceList,
     BriefAndRequirements,
@@ -59,6 +63,8 @@ __all__ = [
     "Decision",
     "ProjectBrief",
     "RequirementsPackage",
+    "SourceDocument",
+    "SourceRegistry",
     "SourceList",
     "BriefAndRequirements",
     "PersonaList",

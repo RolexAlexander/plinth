@@ -9,6 +9,11 @@ def kickoff():
     """Kick off the requirements gathering flow."""
     print("Initializing Requirements Discovery Flow...")
     
+    # Parse --debug-context flag
+    if "--debug-context" in sys.argv:
+        os.environ["DEBUG_CONTEXT"] = "true"
+        sys.argv.remove("--debug-context")
+
     # Check if a transcript argument was passed
     transcript_path = "tests/sample_transcript.txt"
     if len(sys.argv) > 1:

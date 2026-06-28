@@ -4,8 +4,9 @@ from pathlib import Path
 from typing import List, Protocol, Dict, Any
 from pydantic import BaseModel
 from ..models.records import OpenQuestion, Source
-from ..models.package import ProjectBrief, RequirementsPackage
+from ..models.package import ProjectBrief, RequirementsPackage, Decision
 from ..models.enums import Status, SourceOrigin, OpenQuestionStatus, DefaultIfDeferred
+from ..models.sources import SourceDocument
 
 class GatePayload(BaseModel):
     brief: ProjectBrief
@@ -113,11 +114,45 @@ class ConsoleHumanGate:
         return GateResponse(approved=True, answers=answers, deferred_ids=deferred_ids)
 
 def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> None:
+    # Append human answers to the registry as a "gate_answers" document
+    if hasattr(pkg, "source_registry") and pkg.source_registry is not None:
+        new_text = "\n".join(f"[{oq_id}] {ans}" for oq_id, ans in response.answers.items() if ans)
+        if new_text:
+            existing_gate_doc = pkg.source_registry.documents.get("gate_answers")
+            if existing_gate_doc:
+                existing_gate_doc.text += "\n" + new_text
+            else:
+                pkg.source_registry.documents["gate_answers"] = SourceDocument(
+                    doc_id="gate_answers",
+                    kind=SourceOrigin.human_answer,
+                    text=new_text
+                )
+
+    # Determine next Decision ID
+    import re
+    existing_decisions = []
+    for d in pkg.decisions:
+        match = re.match(r"^DEC-(\d+)$", d.id)
+        if match:
+            existing_decisions.append(int(match.group(1)))
+    next_dec_num = max(existing_decisions, default=0) + 1
+
     # 1. Update questions
     for oq in pkg.open_questions:
         if oq.id in response.answers:
             oq.answer = response.answers[oq.id]
             oq.status = OpenQuestionStatus.answered
+            
+            # Create a Decision record for this resolved question
+            dec_id = f"DEC-{next_dec_num:03d}"
+            dec = Decision(
+                id=dec_id,
+                statement=f"Adopted resolution: {oq.answer}",
+                rationale=f"Resolved open question: {oq.question}",
+                related_ids=oq.affects
+            )
+            pkg.decisions.append(dec)
+            next_dec_num += 1
             
             # For each affected requirement, append human_answer source and promote to confirmed
             for r_id in oq.affects:
@@ -127,7 +162,7 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
                     src = Source(
                         origin=SourceOrigin.human_answer,
                         ref=f"gate_resolution",
-                        excerpt=f"Resolved by human: {oq.answer}"
+                        excerpt=oq.answer  # Verbatim answer as excerpt
                     )
                     req.source.append(src)
                     # Promote status to confirmed
@@ -138,6 +173,17 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
             
             # For deferred questions: status deferred, apply default_if_deferred
             if oq.default_if_deferred == DefaultIfDeferred.adopt_assumption:
+                # Create a Decision record for this adopted assumption
+                dec_id = f"DEC-{next_dec_num:03d}"
+                dec = Decision(
+                    id=dec_id,
+                    statement=f"Adopted default assumption: {oq.proposed_assumption}",
+                    rationale=f"Deferred open question: {oq.question}",
+                    related_ids=oq.affects
+                )
+                pkg.decisions.append(dec)
+                next_dec_num += 1
+                
                 # write proposed_assumption onto the affected requirements as an assumed-tier source
                 for r_id in oq.affects:
                     req = next((r for r in pkg.requirements if r.id == r_id), None)
@@ -145,7 +191,7 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
                         src = Source(
                             origin=SourceOrigin.analyst_inference,
                             ref=f"deferred_oq_{oq.id}",
-                            excerpt=f"Deferred question assumption: {oq.proposed_assumption}"
+                            excerpt=oq.proposed_assumption
                         )
                         req.source.append(src)
                         req.status = Status.assumed

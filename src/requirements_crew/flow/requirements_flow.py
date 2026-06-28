@@ -8,6 +8,7 @@ from crewai import Crew, Process
 from ..models.package import RequirementsPackage, ProjectBrief
 from ..models.enums import Status, OpenQuestionStatus, SourceOrigin, DefaultIfDeferred
 from ..models.records import OpenQuestion, Requirement
+from ..models.sources import SourceDocument, SourceRegistry
 from ..validation.package_validators import validate_package_integrity, PackageValidationError
 from ..packaging.writer import write_package_to_disk
 from ..crews.discovery_crew import DiscoveryCrew
@@ -15,7 +16,39 @@ from ..settings import Settings
 from .human_gate import ConsoleHumanGate, GatePayload, GateResponse, apply_gate_responses
 from ..tools.io import read_transcript
 
+import os
+
+def log_task_context(task_name: str, inputs: dict) -> None:
+    if os.getenv("DEBUG_CONTEXT") == "true":
+        transcript = inputs.get("transcript", "")
+        pkg_json = inputs.get("current_package_json", "")
+        print(f"\n[DEBUG CONTEXT] Task: {task_name}")
+        print(f"  Transcript: length={len(transcript)} characters")
+        if transcript:
+            start_chars = transcript[:200].replace('\n', ' ')
+            end_chars = transcript[-200:].replace('\n', ' ')
+            print(f"  Transcript Start: {start_chars!r}")
+            print(f"  Transcript End:   {end_chars!r}")
+        if pkg_json:
+            print(f"  Package JSON: length={len(pkg_json)} characters")
+            try:
+                pkg_dict = json.loads(pkg_json)
+                req_count = len(pkg_dict.get("requirements", []))
+                print(f"  Requirements in Package: count={req_count}")
+            except Exception:
+                pass
+        print("=" * 60 + "\n")
+
 def prune_invalid_affects(pkg: RequirementsPackage) -> None:
+    # 1. Clear and rebuild affected_by on all requirements from oq.affects
+    for r in pkg.requirements:
+        r.affected_by = []
+    for oq in pkg.open_questions:
+        for req_id in oq.affects:
+            req = next((r for r in pkg.requirements if r.id == req_id), None)
+            if req and oq.id not in req.affected_by:
+                req.affected_by.append(oq.id)
+
     req_ids = {r.id for r in pkg.requirements}
     for oq in pkg.open_questions:
         oq.affects = [aff for aff in oq.affects if aff in req_ids]
@@ -74,6 +107,14 @@ class RequirementsFlow(Flow[FlowState]):
         # Read transcript if path is provided, otherwise use transcript_text directly
         if not self.state.transcript_text and self.state.source_provenance:
             self.state.transcript_text = read_transcript(self.state.source_provenance[0])
+        
+        # Register the transcript
+        if self.state.transcript_text:
+            self.state.source_registry.documents["transcript"] = SourceDocument(
+                doc_id="transcript",
+                kind=SourceOrigin.transcript,
+                text=self.state.transcript_text
+            )
         print(f"[{self.state.current_phase}] Transcript length: {len(self.state.transcript_text)} characters.")
 
     @listen(ingest)
@@ -82,11 +123,17 @@ class RequirementsFlow(Flow[FlowState]):
         print(f"[{self.state.current_phase}] Running Discovery Crew (extract_statements -> draft_brief_and_requirements -> build_personas)...")
         
         dc = DiscoveryCrew()
-        result = dc.crew().kickoff(inputs={"transcript": self.state.transcript_text})
+        inputs = {
+            "transcript": self.state.transcript_text,
+            "current_package_json": self.state.model_dump_json()
+        }
+        log_task_context("extract_skeleton", inputs)
+        result = dc.crew().kickoff(inputs=inputs)
         
         # 1. Parse SourceList
         statements_out = result.tasks_output[0].pydantic
         if statements_out and statements_out.statements:
+            self.state.candidate_statement_count = len(statements_out.statements)
             print(f"[{self.state.current_phase}] Extracted {len(statements_out.statements)} raw stakeholder statements.")
             
         # 2. Parse BriefAndRequirements
@@ -110,7 +157,15 @@ class RequirementsFlow(Flow[FlowState]):
         # Run M1/M2 validation to verify skeleton structure
         settings = Settings.load()
         validate_package_integrity(self.state, orphan_check=settings.validation.orphan_check)
-        print(f"[{self.state.current_phase}] Skeleton package validated successfully.")
+        
+        # Verify source grounding
+        from ..validation.grounding import validate_source_grounding
+        validate_source_grounding(self.state, self.state.source_registry)
+        
+        # Verify coverage
+        from ..validation.coverage import validate_coverage
+        validate_coverage(self.state, self.state.transcript_text, self.state.candidate_statement_count)
+        print(f"[{self.state.current_phase}] Skeleton package, grounding, and coverage validated successfully.")
 
     @listen(extract_skeleton)
     def elicitation(self):
@@ -141,12 +196,15 @@ class RequirementsFlow(Flow[FlowState]):
             verbose=True
         )
         
-        res = elicitation_crew.kickoff(inputs={
+        inputs = {
             "transcript": self.state.transcript_text,
+            "current_package_json": self.state.model_dump_json(),
             "brief": self.state.brief.model_dump_json() if self.state.brief else "None",
             "requirements": json.dumps([r.model_dump(mode="json") for r in self.state.requirements]),
             "personas": json.dumps([p.model_dump(mode="json") for p in self.state.personas])
-        })
+        }
+        log_task_context("elicitation", inputs)
+        res = elicitation_crew.kickoff(inputs=inputs)
         
         questions_out = res.pydantic
         if questions_out and questions_out.open_questions:
@@ -165,7 +223,10 @@ class RequirementsFlow(Flow[FlowState]):
         self.state.current_phase = "gate_scope"
         blocking_questions = [
             q for q in self.state.open_questions 
-            if q.blocking and q.status == OpenQuestionStatus.open
+            if q.blocking and (
+                q.status == OpenQuestionStatus.open or
+                (q.status == OpenQuestionStatus.deferred and q.default_if_deferred in (DefaultIfDeferred.leave_open, DefaultIfDeferred.drop_scope))
+            )
         ]
         
         if not blocking_questions:
@@ -181,7 +242,10 @@ class RequirementsFlow(Flow[FlowState]):
             # Recheck
             remaining = [
                 q for q in self.state.open_questions 
-                if q.blocking and q.status == OpenQuestionStatus.open
+                if q.blocking and (
+                    q.status == OpenQuestionStatus.open or
+                    (q.status == OpenQuestionStatus.deferred and q.default_if_deferred in (DefaultIfDeferred.leave_open, DefaultIfDeferred.drop_scope))
+                )
             ]
             if not remaining:
                 print(f"[{self.state.current_phase}] All blocking questions resolved. Proceeding.")
@@ -232,12 +296,15 @@ class RequirementsFlow(Flow[FlowState]):
                 verbose=True
             )
             
-            actor_res = actor_crew.kickoff(inputs={
+            inputs = {
                 "confirmed_requirements": json.dumps([r.model_dump(mode="json") for r in confirmed_reqs]),
                 "findings": json.dumps(self.state.qa_findings) if self.state.qa_findings else "None",
                 "objections": json.dumps(self.state.proxy_objections) if self.state.proxy_objections else "None",
-                "transcript": self.state.transcript_text
-            })
+                "transcript": self.state.transcript_text,
+                "current_package_json": self.state.model_dump_json()
+            }
+            log_task_context("deep_authoring_actor", inputs)
+            actor_res = actor_crew.kickoff(inputs=inputs)
             
             # Merge Actor outputs
             srs_out = actor_res.tasks_output[0].pydantic
@@ -273,17 +340,35 @@ class RequirementsFlow(Flow[FlowState]):
                 self.state.round_count += 1
                 continue
                 
+            # Verbatim Grounding check
+            try:
+                from ..validation.grounding import validate_source_grounding
+                validate_source_grounding(self.state, self.state.source_registry)
+            except Exception as e:
+                print(f"[{self.state.current_phase}] Grounding validation failed in Round {self.state.round_count + 1}: {e}")
+                self.state.qa_findings.append({
+                    "severity": "block",
+                    "kind": "grounding",
+                    "target_id": "package",
+                    "note": f"Grounding validation failed: {str(e)}"
+                })
+                self.state.round_count += 1
+                continue
+                
             # 2. Critic A (qa_review)
             critic_crew_a = Crew(
                 agents=[dc.requirements_reviewer()],
                 tasks=[dc.qa_review()],
                 verbose=True
             )
-            qa_res = critic_crew_a.kickoff(inputs={
+            inputs = {
                 "requirements": json.dumps([r.model_dump(mode="json") for r in self.state.requirements]),
                 "domain_entities": json.dumps([e.model_dump(mode="json") for e in self.state.domain_entities]),
-                "transcript": self.state.transcript_text
-            })
+                "transcript": self.state.transcript_text,
+                "current_package_json": self.state.model_dump_json()
+            }
+            log_task_context("qa_review", inputs)
+            qa_res = critic_crew_a.kickoff(inputs=inputs)
             qa_findings_out = qa_res.pydantic
             self.state.qa_findings = [f.model_dump() for f in qa_findings_out.findings] if qa_findings_out else []
             
@@ -294,13 +379,16 @@ class RequirementsFlow(Flow[FlowState]):
                     tasks=[dc.proxy_review()],
                     verbose=True
                 )
-                proxy_res = critic_crew_b.kickoff(inputs={
+                inputs = {
                     "requirements": json.dumps([r.model_dump(mode="json") for r in self.state.requirements]),
                     "transcript": self.state.transcript_text,
-                    "personas": json.dumps([p.model_dump(mode="json") for p in self.state.personas])
-                })
+                    "personas": json.dumps([p.model_dump(mode="json") for p in self.state.personas]),
+                    "current_package_json": self.state.model_dump_json()
+                }
+                log_task_context("proxy_review", inputs)
+                proxy_res = critic_crew_b.kickoff(inputs=inputs)
                 proxy_out = proxy_res.pydantic
-                if proxy_out:
+                if proxy_out and not getattr(proxy_out, "abstained", False):
                     self.state.proxy_objections = [obj.model_dump() for obj in proxy_out.objections]
                     # Append inferred objections as open questions
                     existing_oq_questions = {q.question for q in self.state.open_questions}
@@ -308,6 +396,8 @@ class RequirementsFlow(Flow[FlowState]):
                         if oq.question not in existing_oq_questions:
                             self.state.open_questions.append(oq)
                 else:
+                    if proxy_out and getattr(proxy_out, "abstained", False):
+                        print(f"[{self.state.current_phase}] Proxy critic abstained: {proxy_out.reason}")
                     self.state.proxy_objections = []
             else:
                 self.state.proxy_objections = []
@@ -319,10 +409,14 @@ class RequirementsFlow(Flow[FlowState]):
                     tasks=[dc.research_context()],
                     verbose=True
                 )
-                research_res = research_crew.kickoff(inputs={
+                inputs = {
+                    "transcript": self.state.transcript_text,
+                    "current_package_json": self.state.model_dump_json(),
                     "brief": self.state.brief.model_dump_json() if self.state.brief else "None",
                     "requirements": json.dumps([r.model_dump(mode="json") for r in self.state.requirements])
-                })
+                }
+                log_task_context("research_context", inputs)
+                research_res = research_crew.kickoff(inputs=inputs)
                 research_out = research_res.pydantic
                 if research_out and research_out.open_questions:
                     existing_oq_questions = {q.question for q in self.state.open_questions}
@@ -352,37 +446,54 @@ class RequirementsFlow(Flow[FlowState]):
         next_num = max(existing_numbers, default=0) + 1
         
         req_ids = {r.id for r in self.state.requirements}
+        valid_ids = (
+            {r.id for r in self.state.requirements} |
+            {us.id for us in self.state.user_stories} |
+            {pers.id for pers in self.state.personas} |
+            {ent.id for ent in self.state.domain_entities} |
+            {dec.id for dec in self.state.decisions}
+        )
 
         # Residual unresolved objections become open questions
         blocking_qa = [f for f in self.state.qa_findings if f["severity"] == "block"]
         for f in blocking_qa:
-            question_text = f"QA Critic Objection: {f['note']} (target: {f['target_id']})"
+            target_id = f["target_id"]
+            if target_id not in valid_ids:
+                print(f"[{self.state.current_phase}] Dropping QA objection targeting non-existent record: {target_id}")
+                continue
+                
+            question_text = f"QA Critic Objection: {f['note']} (target: {target_id})"
             if not any(q.question == question_text for q in self.state.open_questions):
                 oq_id = f"OQ-{next_num:03d}"
-                target_valid = f["target_id"].startswith("REQ-") and f["target_id"] in req_ids
+                aff_list = [target_id] if target_id in req_ids else []
                 oq = OpenQuestion(
                     id=oq_id,
                     question=question_text,
                     synthetic_origin=SourceOrigin.reviewer,
                     blocking=True,
-                    blocking_rationale=f"QA reviewer flagged blocking defect on {f['target_id']}",
-                    affects=[f["target_id"]] if target_valid else []
+                    blocking_rationale=f"QA reviewer flagged blocking defect on {target_id}",
+                    affects=aff_list
                 )
                 self.state.open_questions.append(oq)
                 next_num += 1
                 
         for obj in self.state.proxy_objections:
-            question_text = f"Proxy Critic Objection: {obj['objection']} (target: {obj['target_id']})"
+            target_id = obj["target_id"]
+            if target_id not in valid_ids:
+                print(f"[{self.state.current_phase}] Dropping proxy objection targeting non-existent record: {target_id}")
+                continue
+                
+            question_text = f"Proxy Critic Objection: {obj['objection']} (target: {target_id})"
             if not any(q.question == question_text for q in self.state.open_questions):
                 oq_id = f"OQ-{next_num:03d}"
-                target_valid = obj["target_id"].startswith("REQ-") and obj["target_id"] in req_ids
+                aff_list = [target_id] if target_id in req_ids else []
                 oq = OpenQuestion(
                     id=oq_id,
                     question=question_text,
                     synthetic_origin=SourceOrigin.client_proxy,
                     blocking=True,
-                    blocking_rationale=f"Client proxy raised concern about {obj['target_id']}",
-                    affects=[obj["target_id"]] if target_valid else []
+                    blocking_rationale=f"Client proxy raised concern about {target_id}",
+                    affects=aff_list
                 )
                 self.state.open_questions.append(oq)
                 next_num += 1
@@ -394,7 +505,10 @@ class RequirementsFlow(Flow[FlowState]):
         self.state.current_phase = "gate_signoff"
         blocking_questions = [
             q for q in self.state.open_questions 
-            if q.blocking and q.status == OpenQuestionStatus.open
+            if q.blocking and (
+                q.status == OpenQuestionStatus.open or
+                (q.status == OpenQuestionStatus.deferred and q.default_if_deferred in (DefaultIfDeferred.leave_open, DefaultIfDeferred.drop_scope))
+            )
         ]
         
         if not blocking_questions:
@@ -409,7 +523,10 @@ class RequirementsFlow(Flow[FlowState]):
             apply_gate_responses(self.state, response)
             remaining = [
                 q for q in self.state.open_questions 
-                if q.blocking and q.status == OpenQuestionStatus.open
+                if q.blocking and (
+                    q.status == OpenQuestionStatus.open or
+                    (q.status == OpenQuestionStatus.deferred and q.default_if_deferred in (DefaultIfDeferred.leave_open, DefaultIfDeferred.drop_scope))
+                )
             ]
             if not remaining:
                 print(f"[{self.state.current_phase}] All blocking questions resolved. Proceeding to package.")
@@ -430,6 +547,14 @@ class RequirementsFlow(Flow[FlowState]):
         
         settings = Settings.load()
         out_dir = settings.io.output_dir
+        
+        # Verify source grounding before packaging (strict mode, will raise GroundingError if ungrounded)
+        from ..validation.grounding import validate_source_grounding
+        validate_source_grounding(self.state, self.state.source_registry)
+        
+        # Verify coverage before packaging
+        from ..validation.coverage import validate_coverage
+        validate_coverage(self.state, self.state.transcript_text, self.state.candidate_statement_count)
         
         # Prune invalid affects references from open questions to ensure referential integrity
         prune_invalid_affects(self.state)

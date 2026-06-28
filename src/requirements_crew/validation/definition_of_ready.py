@@ -1,5 +1,5 @@
 from ..models.package import RequirementsPackage
-from ..models.enums import RequirementType, Status, OpenQuestionStatus
+from ..models.enums import RequirementType, Status, OpenQuestionStatus, DefaultIfDeferred
 from .package_validators import run_package_validation_checks
 
 def compute_definition_of_ready(pkg: RequirementsPackage, orphan_check: str = "warn") -> dict:
@@ -10,7 +10,10 @@ def compute_definition_of_ready(pkg: RequirementsPackage, orphan_check: str = "w
     ]
     blocking_questions = [
         q for q in pkg.open_questions 
-        if q.blocking and q.status == OpenQuestionStatus.open
+        if q.blocking and (
+            q.status == OpenQuestionStatus.open or
+            (q.status == OpenQuestionStatus.deferred and q.default_if_deferred in (DefaultIfDeferred.leave_open, DefaultIfDeferred.drop_scope))
+        )
     ]
     
     # Check referential integrity and primary uniqueness using the structured checks
@@ -31,4 +34,5 @@ def compute_definition_of_ready(pkg: RequirementsPackage, orphan_check: str = "w
         "no_blocking_open_questions": len(blocking_questions) == 0,
         "no_dangling_references": no_dangling_references,
         "no_orphan_requirements": no_orphan_requirements_check,
+        "has_user_stories": (len(pkg.requirements) == 0) or (len(pkg.user_stories) > 0),
     }

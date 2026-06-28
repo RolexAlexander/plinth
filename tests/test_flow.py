@@ -208,7 +208,7 @@ def test_requirements_flow_full_execution(mock_gate_class, mock_crew_constructor
             flow = RequirementsFlow()
             flow.state.brief = ProjectBrief(project_name="Test ECommerce", vision="Vision")
             flow.state.source_provenance = ["tests/sample_transcript.txt"]
-            flow.state.transcript_text = "Alice: Hi Bob. Bob: Hi. We need Guest registration."
+            flow.state.transcript_text = "Alice: Hi Bob. Bob: Hi. We need Guest registration. Statement 1"
             
             result = flow.kickoff()
             

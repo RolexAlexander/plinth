@@ -55,7 +55,9 @@ build_personas:
     Build structured personas representing these users.
     For each persona:
     - ID in pattern PERS-\d+.
-    - Specify name, role, goals, pains, permissions.
+    - Specify name, role, and a verbatim 'role_excerpt' from the transcript grounding the role.
+    - Specify goals (list of strings) and a list of verbatim 'goals_excerpts' from the transcript grounding each goal.
+    - Specify pains (list of strings) and permissions (list of strings).
     If you identify any gaps or unanswered details about a persona, list them as OpenQuestions.
     Each OpenQuestion must follow these rules:
     - id must match pattern OQ-\d+ (strictly OQ-\d+, e.g. OQ-001).
@@ -84,6 +86,14 @@ generate_clarifying_questions:
 author_srs:
   description: >
     Refine and assemble the confirmed and assumed requirements into a complete, consistent SRS structure.
+    Refer to the raw stakeholder transcript for grounding:
+    ---
+    {transcript}
+    ---
+    Here is the current package state:
+    ---
+    {current_package_json}
+    ---
     Enforce rule R2: non-functional requirements must carry quantified metrics.
     Only confirmed and assumed requirements can be finalized; do not include unconfirmed inferences or open questions in the requirements list.
     
@@ -102,6 +112,14 @@ author_srs:
 model_domain:
   description: >
     Produce a field-level domain model (entities, attributes, and relationships) from the confirmed requirements.
+    Refer to the original stakeholder transcript to ensure the model aligns with real stakeholder intent and vocabulary:
+    ---
+    {transcript}
+    ---
+    Here is the current package context:
+    ---
+    {current_package_json}
+    ---
     For each entity:
     - ID in pattern ENT-<Name> (e.g. ENT-User).
     - Attributes (name, type, nullability).
@@ -113,7 +131,15 @@ model_domain:
 
 author_diagrams:
   description: >
-    Create human-facing Mermaid diagrams (sequence, activity, or use-case diagram strings) for the key system workflows.
+    Create human-facing Mermaid diagrams (sequence, activity, or use-case diagram strings) for the key system workflows based on the stakeholder transcript and the domain model:
+    Stakeholder Transcript:
+    ---
+    {transcript}
+    ---
+    Here is the current package state:
+    ---
+    {current_package_json}
+    ---
     Do not author a class diagram (as it is generated automatically from the domain model). Ensure all diagrams have valid Mermaid syntax and do not introduce entities that are not in the domain model.
   expected_output: >
     Mermaid behavioral diagram strings.
@@ -121,7 +147,16 @@ author_diagrams:
 
 qa_review:
   description: >
-    Perform a quality assurance review of the drafted SRS (requirements, stories, and domain model).
+    Perform a quality assurance review of the drafted SRS (requirements, stories, and domain model) against the original stakeholder transcript.
+    Use the transcript to verify that requirements match the stakeholder's statements and do not introduce errors/unsupported boilerplate.
+    Stakeholder Transcript:
+    ---
+    {transcript}
+    ---
+    Current Package Context:
+    ---
+    {current_package_json}
+    ---
     Identify ambiguities, contradictions, missing edge cases, or acceptance criteria that do not properly test their requirement statements.
     Output structured findings with severity ('block' or 'info'), kind, target_id, and note.
   expected_output: >
@@ -131,19 +166,36 @@ qa_review:
 proxy_review:
   description: >
     Embody the stakeholder from the transcript and review the SRS.
+    Original Stakeholder Transcript:
+    ---
+    {transcript}
+    ---
+    Current Package Context:
+    ---
+    {current_package_json}
+    ---
     Identify where the specification misses what the stakeholder wanted or implied.
+    If the transcript is missing, incomplete, or contains insufficient information to perform a meaningful stakeholder proxy review, set abstained to true and specify the reason (e.g. 'insufficient grounding').
     objections must cite the transcript reference if grounded. Inferred objections should be raised as OpenQuestions.
     Each OpenQuestion must follow these rules:
     - id must match pattern OQ-\d+ (strictly OQ-\d+, e.g. OQ-001).
     - synthetic_origin must be set to 'client_proxy'.
     - default_if_deferred must be exactly one of: adopt_assumption, leave_open, drop_scope.
   expected_output: >
-    Grounded objections and proposed open questions.
+    Grounded objections and proposed open questions, or an abstention signal.
   agent: client_proxy
 
 research_context:
   description: >
-    Search the web for compliance requirements, domain terminology, and comparable feature sets.
+    Search the web for compliance requirements, domain terminology, and comparable feature sets based on the stakeholder transcript and brief:
+    Stakeholder Transcript:
+    ---
+    {transcript}
+    ---
+    Current Package Context:
+    ---
+    {current_package_json}
+    ---
     You MUST limit your search queries to categories: compliance, domain_terminology, comparable_features.
     Any findings must be output as OpenQuestion suggestions to be reviewed, never as requirements directly.
     Each OpenQuestion must follow these rules:

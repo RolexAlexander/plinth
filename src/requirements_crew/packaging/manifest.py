@@ -3,6 +3,7 @@ from typing import Dict, Any
 from ..models.package import RequirementsPackage
 from ..models.enums import Status, OpenQuestionStatus
 from ..validation.definition_of_ready import compute_definition_of_ready
+from ..validation.coverage import check_requirements_coverage
 
 def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "warn") -> Dict[str, Any]:
     # Counts
@@ -14,9 +15,13 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
     }
 
     # Open blocking questions
+    from ..models.enums import DefaultIfDeferred
     blocking_questions = [
         q.id for q in pkg.open_questions 
-        if q.blocking and q.status == OpenQuestionStatus.open
+        if q.blocking and (
+            q.status == OpenQuestionStatus.open or
+            (q.status == OpenQuestionStatus.deferred and q.default_if_deferred in (DefaultIfDeferred.leave_open, DefaultIfDeferred.drop_scope))
+        )
     ]
 
     # Check: no confirmed requirement has an affected_by pointing at an open+blocking question
@@ -37,7 +42,8 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
         "every_nfr_has_metric",
         "every_confirmed_functional_has_ac",
         "no_blocking_open_questions",
-        "no_dangling_references"
+        "no_dangling_references",
+        "has_user_stories"
     ]
     if orphan_check == "fail":
         blocking_dor_keys.append("no_orphan_requirements")
@@ -58,9 +64,16 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
 
     generated_at_str = pkg.generated_at.isoformat() if pkg.generated_at else datetime.now().isoformat()
 
+    # Calculate coverage
+    from ..models.enums import SourceOrigin
+    transcript_text = ""
+    if pkg.source_registry:
+        transcript_text = pkg.source_registry.text_for_kind(SourceOrigin.transcript)
+    coverage_block = check_requirements_coverage(pkg, transcript_text, pkg.candidate_statement_count)
+
     manifest = {
         "schema_version": "1.0",
-        "project_name": pkg.brief.project_name,
+        "project_name": pkg.brief.project_name if pkg.brief else "Unknown",
         "package_version": pkg.package_version,
         "generated_at": generated_at_str,
         "source_provenance": pkg.source_provenance,
@@ -74,6 +87,7 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
             "traceability": "traceability.json"
         },
         "counts": counts,
+        "coverage": coverage_block,
         "blocking_questions": blocking_questions,
         "definition_of_ready": dor,
         "ready_for": ready_for,

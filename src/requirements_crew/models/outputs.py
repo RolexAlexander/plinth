@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from .records import Source, Requirement, OpenQuestion, AcceptanceCriterion
 from .package import ProjectBrief, Persona, DomainEntity
 
@@ -43,5 +43,7 @@ class ProxyObjection(BaseModel):
     transcript_reference: Optional[str] = None
 
 class ProxyReviewFindings(BaseModel):
-    objections: List[ProxyObjection]
-    open_questions: List[OpenQuestion]
+    objections: List[ProxyObjection] = Field(default_factory=list)
+    open_questions: List[OpenQuestion] = Field(default_factory=list)
+    abstained: bool = False
+    reason: Optional[str] = None

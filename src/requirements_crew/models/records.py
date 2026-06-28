@@ -105,4 +105,8 @@ class OpenQuestion(BaseModel):
     def validate_open_question_rules(self) -> "OpenQuestion":
         if self.blocking and (not self.blocking_rationale or not self.blocking_rationale.strip()):
             raise ValueError(f"Open Question {self.id} is marked blocking but has no blocking rationale.")
+        if self.status == OpenQuestionStatus.answered:
+            if not self.answer or not self.answer.strip():
+                raise ValueError(f"Open Question {self.id} is marked answered but has an empty answer.")
+            self.answer = self.answer.strip()
         return self
