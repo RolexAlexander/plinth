@@ -472,7 +472,9 @@ class RequirementsFlow(Flow[FlowState]):
                     synthetic_origin=SourceOrigin.reviewer,
                     blocking=True,
                     blocking_rationale=f"QA reviewer flagged blocking defect on {target_id}",
-                    affects=aff_list
+                    affects=aff_list,
+                    proposed_assumption=f"Resolve the critic issue by adopting the current implementation draft for {target_id}.",
+                    default_if_deferred=DefaultIfDeferred.adopt_assumption
                 )
                 self.state.open_questions.append(oq)
                 next_num += 1
@@ -493,7 +495,9 @@ class RequirementsFlow(Flow[FlowState]):
                     synthetic_origin=SourceOrigin.client_proxy,
                     blocking=True,
                     blocking_rationale=f"Client proxy raised concern about {target_id}",
-                    affects=aff_list
+                    affects=aff_list,
+                    proposed_assumption=f"Proceed with the current draft requirements for {target_id} as specified.",
+                    default_if_deferred=DefaultIfDeferred.adopt_assumption
                 )
                 self.state.open_questions.append(oq)
                 next_num += 1

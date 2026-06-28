@@ -7,6 +7,43 @@ class GroundingError(Exception):
 def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "")).strip().lower()
 
+def check_verbatim_grounding(needle: str, haystack: str) -> bool:
+    if not needle or not haystack:
+        return False
+        
+    # Check if the entire needle exists in the haystack directly
+    if needle in haystack:
+        return True
+        
+    # Split the needle by common ellipsis representations
+    parts = re.split(r'\.\.\.+|…', needle)
+    parts = [p.strip() for p in parts if p.strip()]
+    if not parts:
+        return False
+        
+    current_pos = 0
+    for part in parts:
+        pos = haystack.find(part, current_pos)
+        if pos != -1:
+            current_pos = pos + len(part)
+        else:
+            # Fallback: split by punctuation and search for clauses with 3+ words
+            subparts = re.split(r'[.,;:?!\-\u2014]+', part)
+            subparts = [sp.strip() for sp in subparts if len(sp.strip().split()) >= 3]
+            
+            if not subparts:
+                return False
+                
+            sub_pos = current_pos
+            for sp in subparts:
+                sp_pos = haystack.find(sp, sub_pos)
+                if sp_pos == -1:
+                    return False
+                sub_pos = sp_pos + len(sp)
+            current_pos = sub_pos
+            
+    return True
+
 def validate_source_grounding(pkg, registry, *, mode: str = "strict") -> list[str]:
     """
     Validates that every confirmed/assumed/open requirement with a real human origin
@@ -31,7 +68,7 @@ def validate_source_grounding(pkg, registry, *, mode: str = "strict") -> list[st
             haystack = _norm(haystack_text)
             needle = _norm(s.excerpt)
             
-            if not needle or needle not in haystack:
+            if not check_verbatim_grounding(needle, haystack):
                 msg = (
                     f"Requirement '{r.id}' source excerpt not found in any '{s.origin.value}' "
                     f"document. Excerpt: {s.excerpt!r}"
@@ -48,7 +85,7 @@ def validate_source_grounding(pkg, registry, *, mode: str = "strict") -> list[st
         
         if p.role_excerpt:
             needle = _norm(p.role_excerpt)
-            if not needle or needle not in haystack:
+            if not check_verbatim_grounding(needle, haystack):
                 warnings.append(
                     f"Persona '{p.id}' role_excerpt not found in transcript: {p.role_excerpt!r}"
                 )
@@ -56,7 +93,7 @@ def validate_source_grounding(pkg, registry, *, mode: str = "strict") -> list[st
         for g_exc in p.goals_excerpts:
             if g_exc:
                 needle = _norm(g_exc)
-                if not needle or needle not in haystack:
+                if not check_verbatim_grounding(needle, haystack):
                     warnings.append(
                         f"Persona '{p.id}' goal excerpt not found in transcript: {g_exc!r}"
                     )

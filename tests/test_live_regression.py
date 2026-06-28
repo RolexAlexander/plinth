@@ -139,6 +139,21 @@ def test_grounding_verification_strict():
     # Should pass without error
     validate_source_grounding(pkg_good, registry, mode="strict")
     
+    # Grounded requirement with ellipses
+    pkg_ellipsis = RequirementsPackage(
+        requirements=[
+            Requirement(
+                id="REQ-003",
+                type=RequirementType.functional,
+                statement="Scan QR code to start",
+                status=Status.confirmed,
+                priority=Priority.must,
+                source=[Source(origin=SourceOrigin.transcript, excerpt="Scan QR ... start machine.")],
+                acceptance_criteria=[AcceptanceCriterion(id="AC-003-a", given="g", when="w", then="t")]
+            )
+        ]
+    )
+    validate_source_grounding(pkg_ellipsis, registry, mode="strict")
     # Fabricated excerpt (ungrounded)
     pkg_bad = RequirementsPackage(
         requirements=[

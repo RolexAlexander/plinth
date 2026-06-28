@@ -53,3 +53,6 @@ uv.lock
 # Logs
 *.log
 logs/
+
+# Scratch directory
+scratch/

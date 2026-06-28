@@ -86,9 +86,9 @@ class ConsoleHumanGate:
             # Read from stdin
             try:
                 response = input("Your answer: ").strip()
-            except OSError:
-                # If stdin is not available (e.g. during pytest capture), we default to defer
-                print("Stdin not available. Automatically deferring question.")
+            except (OSError, EOFError):
+                # If stdin is not available (e.g. during pytest capture or non-interactive run), we default to defer
+                print("Stdin/terminal input not available. Automatically deferring question.")
                 response = "defer"
                 
             if response.lower() == "exit":
