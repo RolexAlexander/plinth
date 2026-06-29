@@ -114,6 +114,17 @@ class RequirementsFlow(Flow[FlowState]):
         "feature", "requirement", "requirements", "question", "questions"
     })
 
+    def _log_phase_counts(self, phase_name: str) -> None:
+        """P03-2: Print record counts for the current flow state for debugging."""
+        if os.getenv("DEBUG_CONTEXT") == "true":
+            print(f"\n[DEBUG CONTEXT] End of phase: {phase_name}")
+            print(f"  Requirements:    {len(self.state.requirements)}")
+            print(f"  Personas:        {len(self.state.personas)}")
+            print(f"  User Stories:    {len(self.state.user_stories)}")
+            print(f"  Open Questions:  {len(self.state.open_questions)}")
+            print(f"  Decisions:       {len(self.state.decisions)}")
+            print("=" * 60 + "\n")
+
     def _filter_off_domain_questions(self) -> None:
         """P02-4: Drop off-domain open questions whose key nouns are absent from
         the transcript and existing requirements. Only drops questions that also
@@ -180,6 +191,7 @@ class RequirementsFlow(Flow[FlowState]):
                 text=self.state.transcript_text
             )
         print(f"[{self.state.current_phase}] Transcript length: {len(self.state.transcript_text)} characters.")
+        self._log_phase_counts("ingest")
 
     @listen(ingest)
     def extract_skeleton(self):
@@ -230,6 +242,7 @@ class RequirementsFlow(Flow[FlowState]):
         from ..validation.coverage import validate_coverage
         validate_coverage(self.state, self.state.transcript_text, self.state.candidate_statement_count)
         print(f"[{self.state.current_phase}] Skeleton package, grounding, and coverage validated successfully.")
+        self._log_phase_counts("extract_skeleton")
 
     @listen(extract_skeleton)
     def elicitation(self):
@@ -285,6 +298,7 @@ class RequirementsFlow(Flow[FlowState]):
             self._filter_off_domain_questions()
             
             print(f"[{self.state.current_phase}] Generated {len(questions_out.open_questions)} clarifying questions.")
+        self._log_phase_counts("elicitation")
 
     @router(elicitation)
     def gate_scope(self):
@@ -299,6 +313,7 @@ class RequirementsFlow(Flow[FlowState]):
         
         if not blocking_questions:
             print(f"[{self.state.current_phase}] No blocking questions. Proceeding to deep authoring.")
+            self._log_phase_counts("gate_scope")
             return "approved"
             
         print(f"[{self.state.current_phase}] Presenting {len(blocking_questions)} questions at Human Gate 1...")
@@ -317,9 +332,11 @@ class RequirementsFlow(Flow[FlowState]):
             ]
             if not remaining:
                 print(f"[{self.state.current_phase}] All blocking questions resolved. Proceeding.")
+                self._log_phase_counts("gate_scope")
                 return "approved"
                 
         print(f"[{self.state.current_phase}] Stdin resolution paused or blocking questions remain. Eliciting more.")
+        self._log_phase_counts("gate_scope")
         return "needs_more"
 
     @listen("needs_more")
@@ -571,6 +588,7 @@ class RequirementsFlow(Flow[FlowState]):
                 next_num += 1
                 
         print(f"[{self.state.current_phase}] Deep authoring finished after {self.state.round_count} rounds.")
+        self._log_phase_counts("deep_authoring")
 
     @listen(deep_authoring)
     def generate_user_stories(self):
@@ -611,10 +629,17 @@ class RequirementsFlow(Flow[FlowState]):
                 print(f"[{self.state.current_phase}] WARNING: {len(uncovered)} must/should requirements not covered by user stories: {sorted(uncovered)}")
         else:
             print(f"[{self.state.current_phase}] WARNING: No user stories generated.")
+        self._log_phase_counts("generate_user_stories")
 
     @router(generate_user_stories)
     def gate_signoff(self):
         self.state.current_phase = "gate_signoff"
+        
+        # Track signoff attempts to prevent infinite loops
+        if not hasattr(self, '_signoff_attempts'):
+            self._signoff_attempts = 0
+        self._signoff_attempts += 1
+        
         blocking_questions = [
             q for q in self.state.open_questions 
             if q.blocking and (
@@ -625,6 +650,18 @@ class RequirementsFlow(Flow[FlowState]):
         
         if not blocking_questions:
             print(f"[{self.state.current_phase}] No blocking questions remaining. Proceeding to package.")
+            self._log_phase_counts("gate_signoff")
+            return "signoff_approved"
+        
+        # In unattended mode, bail after 1 attempt to avoid infinite loop
+        unattended = os.environ.get("PLINTH_UNATTENDED", "").lower() == "true"
+        max_attempts = 1 if unattended else 3
+        
+        if self._signoff_attempts > max_attempts:
+            print(f"[{self.state.current_phase}] Max signoff attempts ({max_attempts}) reached.")
+            print(f"[{self.state.current_phase}] {len(blocking_questions)} blocking questions remain unresolved — proceeding to package anyway.")
+            print(f"[{self.state.current_phase}] NOTE: ready_for will be empty in the handoff manifest.")
+            self._log_phase_counts("gate_signoff")
             return "signoff_approved"
             
         print(f"[{self.state.current_phase}] Presenting {len(blocking_questions)} questions at Human Gate 2...")
@@ -642,14 +679,16 @@ class RequirementsFlow(Flow[FlowState]):
             ]
             if not remaining:
                 print(f"[{self.state.current_phase}] All blocking questions resolved. Proceeding to package.")
+                self._log_phase_counts("gate_signoff")
                 return "signoff_approved"
                 
         print(f"[{self.state.current_phase}] Stdin resolution paused or blocking questions remain.")
+        self._log_phase_counts("gate_signoff")
         return "signoff_needs_more"
 
     @listen("signoff_needs_more")
     def loop_signoff(self):
-        # Route back to deep_authoring or re-check signoff
+        # Route back to re-check signoff (with attempt counter to prevent infinite loop)
         return self.gate_signoff()
 
     @listen("signoff_approved")
@@ -684,4 +723,5 @@ class RequirementsFlow(Flow[FlowState]):
                     f.write(code)
                     
         print(f"[{self.state.current_phase}] Handoff package compiled and written to: {out_dir}")
+        self._log_phase_counts("package")
         return "complete"

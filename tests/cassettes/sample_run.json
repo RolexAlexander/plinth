@@ -1,0 +1,524 @@
+{
+  "extract_statements": {
+    "statements": [
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "scan a QR code on any machine, pay from their phone"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "dashboard showing real-time machine status"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "payment confirmation to machine start within five seconds"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "push status over MQTT every ten seconds"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "integrate Stripe Connect so each laundromat location is a connected account"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "twenty-five dollars a month for unlimited standard washes"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "maybe twenty-five cents per minute"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "join a virtual waitlist and get notified when one frees up"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "reserve three washers from six to eight AM"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "refunds need to be handled too"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "attendant sees machine status and can flag maintenance"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "two-factor authentication, probably TOTP-based"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "meet WCAG 2.1 AA"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "English and Spanish at launch"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "All traffic TLS 1.3"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "PII encrypted at rest — AES-256"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "API rate limiting to prevent abuse: a hundred requests per minute"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "Transaction data kept for seven years"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "offline machine start is a post-launch feature. We'll design the schema to support it"},
+      {"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "verify the API handles at least five hundred concurrent users"}
+    ]
+  },
+  "draft_brief_and_requirements": {
+    "brief": {
+      "project_name": "SpinCycle",
+      "vision": "Mobile cashless smart laundromat management system"
+    },
+    "requirements": [
+      {
+        "id": "REQ-001",
+        "type": "functional",
+        "statement": "Customers shall scan a QR code on any machine and pay from their phone",
+        "rationale": "Reduces dependency on physical coins and cash",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "scan a QR code on any machine, pay from their phone"}],
+        "acceptance_criteria": [{"id": "AC-001-a", "given": "A customer is at a machine", "when": "They scan the QR code and pay", "then": "The machine starts running within 5 seconds"}]
+      },
+      {
+        "id": "REQ-002",
+        "type": "functional",
+        "statement": "The platform shall provide a dashboard showing real-time machine status",
+        "rationale": "Enables operators to monitor machines remotely",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "dashboard showing real-time machine status"}],
+        "acceptance_criteria": [{"id": "AC-002-a", "given": "An operator is logged in", "when": "They open the dashboard", "then": "They see real-time status of all washing machines"}]
+      },
+      {
+        "id": "REQ-003",
+        "type": "non_functional",
+        "statement": "The platform API shall respond quickly enough that a machine starts within 5 seconds of payment",
+        "rationale": "Ensures a responsive user experience",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "payment confirmation to machine start within five seconds"}],
+        "metric": "under 5 seconds"
+      },
+      {
+        "id": "REQ-004",
+        "type": "functional",
+        "statement": "IoT controllers shall push status over MQTT every ten seconds",
+        "rationale": "Enables real-time tracking",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "push status over MQTT every ten seconds"}],
+        "acceptance_criteria": [{"id": "AC-004-a", "given": "An IoT board is powered", "when": "Uptime is running", "then": "It publishes state to MQTT broker every 10 seconds"}]
+      },
+      {
+        "id": "REQ-005",
+        "type": "functional",
+        "statement": "Integrate Stripe Connect so each laundromat location is a connected account",
+        "rationale": "Automates multi-location financial split and settlement",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "integrate Stripe Connect so each laundromat location is a connected account"}],
+        "acceptance_criteria": [{"id": "AC-005-a", "given": "A new location registration", "when": "Connecting payment accounts", "then": "A Stripe connected account is generated"}]
+      },
+      {
+        "id": "REQ-006",
+        "type": "functional",
+        "statement": "Provide a Spin Pass monthly subscription option for twenty-five dollars a month for unlimited washes",
+        "rationale": "Encourages customer loyalty",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "twenty-five dollars a month for unlimited standard washes"}],
+        "acceptance_criteria": [{"id": "AC-006-a", "given": "A customer is active", "when": "They subscribe to Spin Pass", "then": "They get unlimited standard washes"}]
+      },
+      {
+        "id": "REQ-007",
+        "type": "functional",
+        "statement": "Implement an idle fee of twenty-five cents per minute if door is not opened",
+        "rationale": "Encourages prompt unloading of machines",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "maybe twenty-five cents per minute"}],
+        "acceptance_criteria": [{"id": "AC-007-a", "given": "A cycle is completed", "when": "Door remains closed for 15 minutes", "then": "Accumulate idle fee at $0.25/min"}]
+      },
+      {
+        "id": "REQ-008",
+        "type": "functional",
+        "statement": "Customers can join a virtual waitlist and get notified when a machine frees up",
+        "rationale": "Improves peak-hour customer experience",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "join a virtual waitlist and get notified when one frees up"}],
+        "acceptance_criteria": [{"id": "AC-008-a", "given": "All machines are occupied", "when": "Customer requests notify me", "then": "Customer is added to waitlist queue"}]
+      },
+      {
+        "id": "REQ-009",
+        "type": "functional",
+        "statement": "Corporate clients can reserve three washers from six to eight AM",
+        "rationale": "Accommodates high volume business clients",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "reserve three washers from six to eight AM"}],
+        "acceptance_criteria": [{"id": "AC-009-a", "given": "A corporate account", "when": "Booking reserve window", "then": "Selected machines are locked out for general public"}]
+      },
+      {
+        "id": "REQ-010",
+        "type": "functional",
+        "statement": "Process refunds directly through Stripe Connect",
+        "rationale": "Ensures quick resolution of machine malfunction issues",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "refunds need to be handled too"}],
+        "acceptance_criteria": [{"id": "AC-010-a", "given": "A pending refund is approved", "when": "Operator confirms refund", "then": "Invoke Stripe Connect refund API"}]
+      },
+      {
+        "id": "REQ-011",
+        "type": "functional",
+        "statement": "An attendant sees machine status and can flag maintenance",
+        "rationale": "Enables staff duties segregation",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "attendant sees machine status and can flag maintenance"}],
+        "acceptance_criteria": [{"id": "AC-011-a", "given": "Attendant role login", "when": "Accessing dashboard", "then": "Attendant sees statuses but cannot view revenue logs"}]
+      },
+      {
+        "id": "REQ-012",
+        "type": "functional",
+        "statement": "Enforce two-factor authentication, probably TOTP-based for dashboards",
+        "rationale": "Improves security for management operations",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "two-factor authentication, probably TOTP-based"}],
+        "acceptance_criteria": [{"id": "AC-012-a", "given": "Operator dashboard access request", "when": "Entering credentials", "then": "Prompt for TOTP code"}]
+      },
+      {
+        "id": "REQ-013",
+        "type": "non_functional",
+        "statement": "The platform shall meet WCAG 2.1 AA accessibility guidelines",
+        "rationale": "Ensures software accessibility",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "meet WCAG 2.1 AA"}],
+        "metric": "WCAG 2.1 AA compliant"
+      },
+      {
+        "id": "REQ-014",
+        "type": "constraint",
+        "statement": "The platform must support English and Spanish at launch",
+        "rationale": "Localization compatibility",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "English and Spanish at launch"}],
+        "metric": "English & Spanish locales supported"
+      },
+      {
+        "id": "REQ-015",
+        "type": "constraint",
+        "statement": "All traffic shall be secured via TLS 1.3",
+        "rationale": "Secures data transit",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "All traffic TLS 1.3"}],
+        "metric": "TLS 1.3 protocol enforced"
+      },
+      {
+        "id": "REQ-016",
+        "type": "constraint",
+        "statement": "PII must be encrypted at rest using AES-256",
+        "rationale": "Protects customer private records",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "PII encrypted at rest — AES-256"}],
+        "metric": "AES-256 database level encryption"
+      },
+      {
+        "id": "REQ-017",
+        "type": "constraint",
+        "statement": "Enforce API rate limiting to a hundred requests per minute per user",
+        "rationale": "Prevents API overload and denial of service",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "API rate limiting to prevent abuse: a hundred requests per minute"}],
+        "metric": "Max 100 requests per minute"
+      },
+      {
+        "id": "REQ-018",
+        "type": "constraint",
+        "statement": "Transaction data must be kept for seven years for compliance",
+        "rationale": "Tax and financial regulations compliance",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "Transaction data kept for seven years"}],
+        "metric": "7 years retention period"
+      },
+      {
+        "id": "REQ-019",
+        "type": "functional",
+        "statement": "Design the schema to support offline machine start post-launch",
+        "rationale": "Prepares architecture for offline fallback support",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "offline machine start is a post-launch feature. We'll design the schema to support it"}],
+        "acceptance_criteria": [{"id": "AC-019-a", "given": "The machine database schema", "when": "Audited for attributes", "then": "Offline capability columns must exist"}]
+      },
+      {
+        "id": "REQ-020",
+        "type": "non_functional",
+        "statement": "The platform API shall support at least five hundred concurrent users without degradation",
+        "rationale": "Ensures load tolerance",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "verify the API handles at least five hundred concurrent users"}],
+        "metric": "500 concurrent connections supported"
+      }
+    ]
+  },
+  "build_personas": {
+    "personas": [
+      {
+        "id": "PERS-001",
+        "name": "Dana Reeves",
+        "role": "Operations Manager",
+        "role_excerpt": "Operations Manager",
+        "goals": ["Monitor machine availability and status"],
+        "goals_excerpts": ["real-time machine status"],
+        "pains": ["coin jams"],
+        "permissions": ["view dashboard"],
+        "status": "confirmed"
+      }
+    ]
+  },
+  "generate_clarifying_questions": {
+    "open_questions": [
+      {
+        "id": "OQ-001",
+        "question": "What Stripe Connect account type is preferred for payouts?",
+        "synthetic_origin": "client_proxy",
+        "blocking": true,
+        "blocking_rationale": "Affects Connected Account layout and onboarding flow",
+        "proposed_assumption": "Use Standard Stripe Connect accounts",
+        "default_if_deferred": "adopt_assumption",
+        "affects": ["REQ-005"],
+        "status": "open"
+      }
+    ]
+  },
+  "author_srs": {
+    "requirements": [
+      {
+        "id": "REQ-001",
+        "type": "functional",
+        "statement": "Customers shall scan a QR code on any machine and pay from their phone",
+        "rationale": "Reduces dependency on physical coins and cash",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "scan a QR code on any machine, pay from their phone"}],
+        "acceptance_criteria": [{"id": "AC-001-a", "given": "A customer is at a machine", "when": "They scan the QR code and pay", "then": "The machine starts running within 5 seconds"}]
+      },
+      {
+        "id": "REQ-002",
+        "type": "functional",
+        "statement": "The platform shall provide a dashboard showing real-time machine status",
+        "rationale": "Enables operators to monitor machines remotely",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "dashboard showing real-time machine status"}],
+        "acceptance_criteria": [{"id": "AC-002-a", "given": "An operator is logged in", "when": "They open the dashboard", "then": "They see real-time status of all washing machines"}]
+      },
+      {
+        "id": "REQ-003",
+        "type": "non_functional",
+        "statement": "The platform API shall respond quickly enough that a machine starts within 5 seconds of payment",
+        "rationale": "Ensures a responsive user experience",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "payment confirmation to machine start within five seconds"}],
+        "metric": "under 5 seconds"
+      },
+      {
+        "id": "REQ-004",
+        "type": "functional",
+        "statement": "IoT controllers shall push status over MQTT every ten seconds",
+        "rationale": "Enables real-time tracking",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "push status over MQTT every ten seconds"}],
+        "acceptance_criteria": [{"id": "AC-004-a", "given": "An IoT board is powered", "when": "Uptime is running", "then": "It publishes state to MQTT broker every 10 seconds"}]
+      },
+      {
+        "id": "REQ-005",
+        "type": "functional",
+        "statement": "Integrate Stripe Connect so each laundromat location is a connected account",
+        "rationale": "Automates multi-location financial split and settlement",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "integrate Stripe Connect so each laundromat location is a connected account"}],
+        "acceptance_criteria": [{"id": "AC-005-a", "given": "A new location registration", "when": "Connecting payment accounts", "then": "A Stripe connected account is generated"}]
+      },
+      {
+        "id": "REQ-006",
+        "type": "functional",
+        "statement": "Provide a Spin Pass monthly subscription option for twenty-five dollars a month for unlimited washes",
+        "rationale": "Encourages customer loyalty",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "twenty-five dollars a month for unlimited standard washes"}],
+        "acceptance_criteria": [{"id": "AC-006-a", "given": "A customer is active", "when": "They subscribe to Spin Pass", "then": "They get unlimited standard washes"}]
+      },
+      {
+        "id": "REQ-007",
+        "type": "functional",
+        "statement": "Implement an idle fee of twenty-five cents per minute if door is not opened",
+        "rationale": "Encourages prompt unloading of machines",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "maybe twenty-five cents per minute"}],
+        "acceptance_criteria": [{"id": "AC-007-a", "given": "A cycle is completed", "when": "Door remains closed for 15 minutes", "then": "Accumulate idle fee at $0.25/min"}]
+      },
+      {
+        "id": "REQ-008",
+        "type": "functional",
+        "statement": "Customers can join a virtual waitlist and get notified when a machine frees up",
+        "rationale": "Improves peak-hour customer experience",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "join a virtual waitlist and get notified when one frees up"}],
+        "acceptance_criteria": [{"id": "AC-008-a", "given": "All machines are occupied", "when": "Customer requests notify me", "then": "Customer is added to waitlist queue"}]
+      },
+      {
+        "id": "REQ-009",
+        "type": "functional",
+        "statement": "Corporate clients can reserve three washers from six to eight AM",
+        "rationale": "Accommodates high volume business clients",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "reserve three washers from six to eight AM"}],
+        "acceptance_criteria": [{"id": "AC-009-a", "given": "A corporate account", "when": "Booking reserve window", "then": "Selected machines are locked out for general public"}]
+      },
+      {
+        "id": "REQ-010",
+        "type": "functional",
+        "statement": "Process refunds directly through Stripe Connect",
+        "rationale": "Ensures quick resolution of machine malfunction issues",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "refunds need to be handled too"}],
+        "acceptance_criteria": [{"id": "AC-010-a", "given": "A pending refund is approved", "when": "Operator confirms refund", "then": "Invoke Stripe Connect refund API"}]
+      },
+      {
+        "id": "REQ-011",
+        "type": "functional",
+        "statement": "An attendant sees machine status and can flag maintenance",
+        "rationale": "Enables staff duties segregation",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "attendant sees machine status and can flag maintenance"}],
+        "acceptance_criteria": [{"id": "AC-011-a", "given": "Attendant role login", "when": "Accessing dashboard", "then": "Attendant sees statuses but cannot view revenue logs"}]
+      },
+      {
+        "id": "REQ-012",
+        "type": "functional",
+        "statement": "Enforce two-factor authentication, probably TOTP-based for dashboards",
+        "rationale": "Improves security for management operations",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "two-factor authentication, probably TOTP-based"}],
+        "acceptance_criteria": [{"id": "AC-012-a", "given": "Operator dashboard access request", "when": "Entering credentials", "then": "Prompt for TOTP code"}]
+      },
+      {
+        "id": "REQ-013",
+        "type": "non_functional",
+        "statement": "The platform shall meet WCAG 2.1 AA accessibility guidelines",
+        "rationale": "Ensures software accessibility",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "meet WCAG 2.1 AA"}],
+        "metric": "WCAG 2.1 AA compliant"
+      },
+      {
+        "id": "REQ-014",
+        "type": "constraint",
+        "statement": "The platform must support English and Spanish at launch",
+        "rationale": "Localization compatibility",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "English and Spanish at launch"}],
+        "metric": "English & Spanish locales supported"
+      },
+      {
+        "id": "REQ-015",
+        "type": "constraint",
+        "statement": "All traffic shall be secured via TLS 1.3",
+        "rationale": "Secures data transit",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "All traffic TLS 1.3"}],
+        "metric": "TLS 1.3 protocol enforced"
+      },
+      {
+        "id": "REQ-016",
+        "type": "constraint",
+        "statement": "PII must be encrypted at rest using AES-256",
+        "rationale": "Protects customer private records",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "PII encrypted at rest — AES-256"}],
+        "metric": "AES-256 database level encryption"
+      },
+      {
+        "id": "REQ-017",
+        "type": "constraint",
+        "statement": "Enforce API rate limiting to a hundred requests per minute per user",
+        "rationale": "Prevents API overload and denial of service",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "API rate limiting to prevent abuse: a hundred requests per minute"}],
+        "metric": "Max 100 requests per minute"
+      },
+      {
+        "id": "REQ-018",
+        "type": "constraint",
+        "statement": "Transaction data must be kept for seven years for compliance",
+        "rationale": "Tax and financial regulations compliance",
+        "status": "confirmed",
+        "priority": "must",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "Transaction data kept for seven years"}],
+        "metric": "7 years retention period"
+      },
+      {
+        "id": "REQ-019",
+        "type": "functional",
+        "statement": "Design the schema to support offline machine start post-launch",
+        "rationale": "Prepares architecture for offline fallback support",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "offline machine start is a post-launch feature. We'll design the schema to support it"}],
+        "acceptance_criteria": [{"id": "AC-019-a", "given": "The machine database schema", "when": "Audited for attributes", "then": "Offline capability columns must exist"}]
+      },
+      {
+        "id": "REQ-020",
+        "type": "non_functional",
+        "statement": "The platform API shall support at least five hundred concurrent users without degradation",
+        "rationale": "Ensures load tolerance",
+        "status": "confirmed",
+        "priority": "should",
+        "source": [{"origin": "transcript", "ref": "tests/sample_transcript.txt", "excerpt": "verify the API handles at least five hundred concurrent users"}],
+        "metric": "500 concurrent connections supported"
+      }
+    ]
+  },
+  "model_domain": {
+    "domain_entities": [
+      {
+        "id": "ENT-User",
+        "name": "User",
+        "attributes": [
+          {"name": "id", "type": "string", "nullable": false},
+          {"name": "email", "type": "string", "nullable": false}
+        ],
+        "relationships": []
+      }
+    ]
+  },
+  "author_diagrams": {
+    "use_case_diagram": "classDiagram\nUser --|> Person",
+    "sequence_diagram": "classDiagram\nUser --|> Person",
+    "activity_diagram": "classDiagram\nUser --|> Person"
+  },
+  "qa_review": {
+    "findings": []
+  },
+  "proxy_review": {
+    "objections": [],
+    "open_questions": [],
+    "abstained": true,
+    "reason": "No major objections found."
+  },
+  "research_context": {
+    "open_questions": []
+  },
+  "author_user_stories": {
+    "user_stories": [
+      {
+        "id": "US-001",
+        "epic": "cashless_payments",
+        "as_a": "Customer",
+        "i_want": "to scan a QR code on a machine and pay using my phone",
+        "so_that": "I can start wash cycles cashless without needing coins",
+        "requirement_ids": ["REQ-001", "REQ-003", "REQ-004", "REQ-005", "REQ-012", "REQ-014", "REQ-015", "REQ-016", "REQ-017", "REQ-018"],
+        "acceptance_criteria": [{"id": "AC-001-b", "given": "A customer scans the QR code", "when": "They select a cycle and pay via Stripe", "then": "Payment is processed and machine W-07 starts"}],
+        "edge_cases": ["Incomplete Stripe transaction should abort machine start"],
+        "priority": "must"
+      },
+      {
+        "id": "US-002",
+        "epic": "operator_dashboard",
+        "as_a": "Operations Manager",
+        "i_want": "to view real-time status of all machines on a live floor map",
+        "so_that": "I can quickly see which machines are idle, running, or faulted",
+        "requirement_ids": ["REQ-002", "REQ-006", "REQ-007", "REQ-008", "REQ-009", "REQ-010", "REQ-011", "REQ-013", "REQ-019", "REQ-020"],
+        "acceptance_criteria": [{"id": "AC-002-b", "given": "An Operations Manager has active location", "when": "They view the dashboard map", "then": "Machine color codes show W-07 running and D-03 idle"}],
+        "edge_cases": ["Network connectivity loss of a machine shows it as offline"],
+        "priority": "must"
+      }
+    ]
+  }
+}
