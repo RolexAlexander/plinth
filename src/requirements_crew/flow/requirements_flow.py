@@ -95,6 +95,70 @@ class FlowState(RequirementsPackage):
     mermaid_diagrams: Dict[str, str] = Field(default_factory=dict)
 
 class RequirementsFlow(Flow[FlowState]):
+
+    # Common English stop words to ignore when extracting key nouns
+    _STOP_WORDS = frozenset({
+        "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+        "have", "has", "had", "do", "does", "did", "will", "would", "could",
+        "should", "may", "might", "shall", "can", "need", "must", "to", "of",
+        "in", "for", "on", "with", "at", "by", "from", "as", "into", "about",
+        "between", "through", "during", "before", "after", "above", "below",
+        "and", "or", "but", "not", "no", "nor", "so", "if", "then", "than",
+        "that", "this", "these", "those", "it", "its", "they", "them", "their",
+        "we", "our", "you", "your", "he", "she", "his", "her", "what", "which",
+        "who", "whom", "how", "when", "where", "why", "all", "each", "every",
+        "any", "some", "more", "most", "other", "such", "only", "same", "also",
+        "there", "here", "just", "very", "much", "well", "still", "already",
+        "system", "user", "users", "platform", "application", "data", "shall",
+        "specific", "defined", "provide", "support", "allow", "enable", "ensure",
+        "feature", "requirement", "requirements", "question", "questions"
+    })
+
+    def _filter_off_domain_questions(self) -> None:
+        """P02-4: Drop off-domain open questions whose key nouns are absent from
+        the transcript and existing requirements. Only drops questions that also
+        have no valid `affects` targets."""
+        import re as _re
+
+        # Build a reference corpus of domain nouns from transcript + requirements
+        transcript_lower = self.state.transcript_text.lower()
+        req_text = " ".join(
+            f"{r.statement} {r.rationale or ''}"
+            for r in self.state.requirements
+        ).lower()
+        domain_corpus = transcript_lower + " " + req_text
+
+        filtered = []
+        for oq in self.state.open_questions:
+            # If the question has valid affects targets, keep it regardless
+            if oq.affects:
+                filtered.append(oq)
+                continue
+
+            # Extract key nouns (words with 4+ chars, not stop words)
+            words = _re.findall(r"[a-zA-Z]{4,}", oq.question.lower())
+            key_nouns = [w for w in words if w not in self._STOP_WORDS]
+
+            if not key_nouns:
+                filtered.append(oq)
+                continue
+
+            # Check if at least 40% of key nouns appear in the domain corpus
+            grounded_count = sum(1 for n in key_nouns if n in domain_corpus)
+            grounding_ratio = grounded_count / len(key_nouns)
+
+            if grounding_ratio >= 0.4:
+                filtered.append(oq)
+            else:
+                print(
+                    f"[{self.state.current_phase}] Dropped off-domain question {oq.id}: "
+                    f"{oq.question[:80]}... (grounding ratio: {grounding_ratio:.0%})"
+                )
+
+        dropped_count = len(self.state.open_questions) - len(filtered)
+        if dropped_count > 0:
+            print(f"[{self.state.current_phase}] Filtered out {dropped_count} off-domain question(s).")
+        self.state.open_questions = filtered
     
     @start()
     def ingest(self):
@@ -216,6 +280,10 @@ class RequirementsFlow(Flow[FlowState]):
             
             # Prune invalid affects references from newly generated open questions
             prune_invalid_affects(self.state)
+            
+            # P02-4: Ground clarifying questions — drop off-domain questions
+            self._filter_off_domain_questions()
+            
             print(f"[{self.state.current_phase}] Generated {len(questions_out.open_questions)} clarifying questions.")
 
     @router(elicitation)
@@ -504,7 +572,47 @@ class RequirementsFlow(Flow[FlowState]):
                 
         print(f"[{self.state.current_phase}] Deep authoring finished after {self.state.round_count} rounds.")
 
-    @router(deep_authoring)
+    @listen(deep_authoring)
+    def generate_user_stories(self):
+        self.state.current_phase = "generate_user_stories"
+        print(f"[{self.state.current_phase}] Generating user stories from finalized requirements...")
+        
+        dc = DiscoveryCrew()
+        stories_crew = Crew(
+            agents=[dc.user_story_writer()],
+            tasks=[dc.author_user_stories()],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        inputs = {
+            "transcript": self.state.transcript_text,
+            "current_package_json": self.state.model_dump_json()
+        }
+        log_task_context("generate_user_stories", inputs)
+        stories_res = stories_crew.kickoff(inputs=inputs)
+        
+        stories_out = stories_res.pydantic
+        if stories_out and stories_out.user_stories:
+            self.state.user_stories = stories_out.user_stories
+            print(f"[{self.state.current_phase}] Generated {len(self.state.user_stories)} user stories.")
+            
+            # Check coverage: every must/should requirement should be referenced
+            must_should_ids = {
+                r.id for r in self.state.requirements
+                if r.priority.value in ("must", "should")
+                and r.status != Status.deprecated
+            }
+            covered_ids = set()
+            for us in self.state.user_stories:
+                covered_ids.update(us.requirement_ids)
+            uncovered = must_should_ids - covered_ids
+            if uncovered:
+                print(f"[{self.state.current_phase}] WARNING: {len(uncovered)} must/should requirements not covered by user stories: {sorted(uncovered)}")
+        else:
+            print(f"[{self.state.current_phase}] WARNING: No user stories generated.")
+
+    @router(generate_user_stories)
     def gate_signoff(self):
         self.state.current_phase = "gate_signoff"
         blocking_questions = [

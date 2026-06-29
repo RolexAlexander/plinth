@@ -40,6 +40,7 @@ from .outputs import (
     QaReviewFindings,
     ProxyObjection,
     ProxyReviewFindings,
+    UserStoryList,
 )
 
 __all__ = [
@@ -76,4 +77,5 @@ __all__ = [
     "QaReviewFindings",
     "ProxyObjection",
     "ProxyReviewFindings",
+    "UserStoryList",
 ]

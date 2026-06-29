@@ -23,6 +23,8 @@ from requirements_crew.models import (
     OpenQuestionStatus,
     AcceptanceCriterion,
     DefaultIfDeferred,
+    UserStory,
+    UserStoryList,
 )
 from requirements_crew.models.outputs import (
     SourceList,
@@ -106,6 +108,7 @@ def mock_crews():
         mock_instance.uml_architect.return_value = MagicMock()
         mock_instance.requirements_reviewer.return_value = MagicMock()
         mock_instance.researcher.return_value = MagicMock()
+        mock_instance.user_story_writer.return_value = MagicMock()
         
         mock_instance.extract_statements.return_value = MagicMock()
         mock_instance.draft_brief_and_requirements.return_value = MagicMock()
@@ -117,6 +120,7 @@ def mock_crews():
         mock_instance.qa_review.return_value = MagicMock()
         mock_instance.proxy_review.return_value = MagicMock()
         mock_instance.research_context.return_value = MagicMock()
+        mock_instance.author_user_stories.return_value = MagicMock()
         
         yield mock_instance
 
@@ -167,11 +171,26 @@ def test_requirements_flow_full_execution(mock_gate_class, mock_crew_constructor
     mock_qa_crew = MagicMock()
     mock_qa_crew.kickoff.return_value = MockCrewResult([], final_pydantic=QaReviewFindings(findings=[]))
     
+    mock_stories_crew = MagicMock()
+    mock_stories_crew.kickoff.return_value = MockCrewResult([], final_pydantic=UserStoryList(user_stories=[
+        UserStory(
+            id="US-001",
+            epic="Auth",
+            as_a="User",
+            i_want="Action",
+            so_that="Benefit",
+            requirement_ids=["REQ-001"],
+            priority=Priority.must,
+            acceptance_criteria=[AcceptanceCriterion(id="AC-001-b", given="g", when="w", then="t")]
+        )
+    ]))
+    
     # We return these mock crews in sequence of constructor calls
     mock_crew_constructor.side_effect = [
         mock_elicitation_crew,  # for elicitation step
         mock_actor_crew,        # for actor loop round 1
         mock_qa_crew,           # for QA reviewer
+        mock_stories_crew,      # for user stories generation
     ]
     
     # Mock Human Gate 1 (gate_scope) to answer OQ-001

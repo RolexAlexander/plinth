@@ -71,6 +71,36 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
         transcript_text = pkg.source_registry.text_for_kind(SourceOrigin.transcript)
     coverage_block = check_requirements_coverage(pkg, transcript_text, pkg.candidate_statement_count)
 
+    # Stories coverage: check must/should requirements covered by user stories
+    must_should_ids = {
+        r.id for r in pkg.requirements
+        if r.priority.value in ("must", "should")
+        and r.status != Status.deprecated
+    }
+    covered_by_stories = set()
+    for us in pkg.user_stories:
+        covered_by_stories.update(us.requirement_ids)
+    uncovered_must_should = sorted(must_should_ids - covered_by_stories)
+    stories_coverage = {
+        "must_should_total": len(must_should_ids),
+        "must_should_covered": len(must_should_ids) - len(uncovered_must_should),
+        "uncovered_must_should": uncovered_must_should,
+        "coverage_ratio": (len(must_should_ids) - len(uncovered_must_should)) / len(must_should_ids) if must_should_ids else 1.0,
+    }
+
+    # Numbering gaps (P02-8): detect gaps in REQ-xxx sequence
+    import re as _re
+    req_nums = sorted(
+        int(_re.match(r"^REQ-(\d+)$", r.id).group(1))
+        for r in pkg.requirements
+        if _re.match(r"^REQ-(\d+)$", r.id)
+    )
+    numbering_gaps = []
+    for i in range(len(req_nums) - 1):
+        if req_nums[i + 1] - req_nums[i] > 1:
+            for gap in range(req_nums[i] + 1, req_nums[i + 1]):
+                numbering_gaps.append(f"REQ-{gap:03d}")
+
     manifest = {
         "schema_version": "1.0",
         "project_name": pkg.brief.project_name if pkg.brief else "Unknown",
@@ -88,9 +118,11 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
         },
         "counts": counts,
         "coverage": coverage_block,
+        "stories_coverage": stories_coverage,
         "blocking_questions": blocking_questions,
         "definition_of_ready": dor,
         "ready_for": ready_for,
+        "numbering_gaps": numbering_gaps,
         "_invariant": "ready_for is empty until blocking_questions==[] and all definition_of_ready checks pass"
     }
 

@@ -10,6 +10,7 @@ from ..models.outputs import (
     MermaidDiagramList,
     QaReviewFindings,
     ProxyReviewFindings,
+    UserStoryList,
 )
 from ..tools.llm import get_default_llm
 from ..tools.serper import ScopedSerperTool
@@ -89,6 +90,13 @@ class DiscoveryCrew:
             tools=[ScopedSerperTool()]
         )
 
+    @agent
+    def user_story_writer(self) -> Agent:
+        return Agent(
+            config=self.agents_config["user_story_writer"],
+            llm=get_default_llm()
+        )
+
     # ----------------------------------------------------
     # Tasks
     # ----------------------------------------------------
@@ -162,6 +170,13 @@ class DiscoveryCrew:
         return Task(
             config=self.tasks_config["research_context"],
             output_pydantic=OpenQuestionList
+        )
+
+    @task
+    def author_user_stories(self) -> Task:
+        return Task(
+            config=self.tasks_config["author_user_stories"],
+            output_pydantic=UserStoryList
         )
 
     # ----------------------------------------------------

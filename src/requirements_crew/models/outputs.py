@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 from .records import Source, Requirement, OpenQuestion, AcceptanceCriterion
-from .package import ProjectBrief, Persona, DomainEntity
+from .package import ProjectBrief, Persona, DomainEntity, UserStory
 
 class SourceList(BaseModel):
     statements: List[Source]
@@ -47,3 +47,6 @@ class ProxyReviewFindings(BaseModel):
     open_questions: List[OpenQuestion] = Field(default_factory=list)
     abstained: bool = False
     reason: Optional[str] = None
+
+class UserStoryList(BaseModel):
+    user_stories: List[UserStory]

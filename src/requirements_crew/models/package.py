@@ -33,6 +33,7 @@ class Persona(BaseModel):
     goals_excerpts: List[str] = Field(default_factory=list)
     pains: List[str] = Field(default_factory=list)
     permissions: List[str] = Field(default_factory=list)
+    status: str = "confirmed"        # confirmed | assumed
 
     @field_validator("id")
     @classmethod
@@ -80,6 +81,7 @@ class Decision(BaseModel):
     statement: str
     rationale: str
     related_ids: List[str] = Field(default_factory=list)
+    resolved_by: Optional[str] = None  # "human" | "auto_default" | None
 
     @field_validator("id")
     @classmethod

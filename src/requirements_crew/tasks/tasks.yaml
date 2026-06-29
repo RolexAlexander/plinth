@@ -205,3 +205,30 @@ research_context:
   expected_output: >
     A list of OpenQuestion objects.
   agent: researcher
+
+author_user_stories:
+  description: >
+    Transform the finalized requirements into user stories grouped under epics.
+    
+    Stakeholder Transcript (for context):
+    ---
+    {transcript}
+    ---
+    Current Package State (requirements, personas, brief):
+    ---
+    {current_package_json}
+    ---
+    
+    Rules:
+    1. Group stories under epics that map to the project brief's scope areas (e.g. authentication/payments, machine control, loyalty/subscription, dashboard/roles, maintenance, reservations, etc.).
+    2. Write each story in canonical form: as_a (persona role), i_want (action), so_that (benefit).
+    3. Each story MUST carry `requirement_ids` linking to the requirements it implements.
+    4. **Coverage rule:** Every requirement with priority `must` or `should` MUST be referenced by at least one user story's `requirement_ids`. If a must/should requirement is not covered, create a story for it.
+    5. Include `acceptance_criteria` (id pattern AC-\d+-[a-z]) and `edge_cases` for each story.
+    6. Story IDs must match pattern US-\d+ (e.g. US-001, US-002).
+    7. Story priority should inherit from the highest-priority requirement it covers.
+    8. Use the personas from the package to inform the `as_a` field — use the persona's role, not their name.
+    9. Do NOT invent new requirements. Only organize existing requirements into user stories.
+  expected_output: >
+    A list of UserStory objects grouped under epics, covering all must and should requirements.
+  agent: user_story_writer

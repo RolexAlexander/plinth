@@ -14,6 +14,12 @@ def kickoff():
         os.environ["DEBUG_CONTEXT"] = "true"
         sys.argv.remove("--debug-context")
 
+    # Parse --unattended flag
+    if "--unattended" in sys.argv:
+        os.environ["PLINTH_UNATTENDED"] = "true"
+        sys.argv.remove("--unattended")
+        print("Running in UNATTENDED mode — blocking questions will be auto-adopted where allowed.")
+
     # Check if a transcript argument was passed
     transcript_path = "tests/sample_transcript.txt"
     if len(sys.argv) > 1:

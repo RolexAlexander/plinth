@@ -1,25 +1,37 @@
 import json
 import os
+import sys
+import logging
 from pathlib import Path
-from typing import List, Protocol, Dict, Any
+from typing import List, Protocol, Dict, Any, Optional
 from pydantic import BaseModel
 from ..models.records import OpenQuestion, Source
 from ..models.package import ProjectBrief, RequirementsPackage, Decision
 from ..models.enums import Status, SourceOrigin, OpenQuestionStatus, DefaultIfDeferred
 from ..models.sources import SourceDocument
 
+
+def _is_unattended() -> bool:
+    """Check if running in unattended mode."""
+    return os.environ.get("PLINTH_UNATTENDED", "").lower() == "true"
+
+
 class GatePayload(BaseModel):
     brief: ProjectBrief
     blocking_questions: List[OpenQuestion]
 
+
 class GateResponse(BaseModel):
     approved: bool
-    answers: Dict[str, str]  # maps OQ-id -> answer string
-    deferred_ids: List[str]  # list of OQ-ids that the user wants to defer
+    answers: Dict[str, str]           # maps OQ-id -> answer string
+    deferred_ids: List[str]           # list of OQ-ids that the user wants to defer
+    auto_deferred_ids: List[str] = [] # list of OQ-ids auto-adopted in unattended mode
+
 
 class HumanGate(Protocol):
     def request(self, payload: GatePayload) -> GateResponse:
         ...
+
 
 class ConsoleHumanGate:
     def __init__(self, answers_file: str = "answers.json"):
@@ -71,25 +83,98 @@ class ConsoleHumanGate:
                     print(f"\nPlease fill in the answers in {self.answers_file} or use the console input.")
             except Exception as e:
                 print(f"Error reading answers file: {e}")
-                
-        # Fallback to stdin console input
+
+        # Determine run mode
+        unattended = _is_unattended()
+
+        if unattended:
+            return self._handle_unattended(payload)
+        else:
+            return self._handle_interactive(payload)
+
+    def _handle_unattended(self, payload: GatePayload) -> GateResponse:
+        """Unattended mode: auto-adopt where default_if_deferred == adopt_assumption.
+        Questions with leave_open or drop_scope cannot auto-clear."""
+        print("[UNATTENDED] Auto-resolving blocking questions...")
+        answers = {}
+        deferred_ids = []
+        auto_deferred_ids = []
+        cannot_auto_resolve = []
+        
+        for oq in payload.blocking_questions:
+            if oq.default_if_deferred == DefaultIfDeferred.adopt_assumption:
+                deferred_ids.append(oq.id)
+                auto_deferred_ids.append(oq.id)
+                print(f"  [AUTO-ADOPT] {oq.id}: {oq.question}")
+                print(f"    -> Adopting assumption: {oq.proposed_assumption}")
+            else:
+                cannot_auto_resolve.append(oq)
+                print(f"  [CANNOT AUTO-RESOLVE] {oq.id}: {oq.question}")
+                print(f"    -> default_if_deferred={oq.default_if_deferred.value} — requires human input")
+
+        if cannot_auto_resolve:
+            print(f"\n[UNATTENDED] WARNING: {len(cannot_auto_resolve)} blocking questions could not be auto-resolved.")
+            print("  These questions have default_if_deferred of 'leave_open' or 'drop_scope' and require human input.")
+            print("  Run interactively (without --unattended) to resolve them.")
+
+        print(f"\n[UNATTENDED] Summary: {len(auto_deferred_ids)} auto-adopted, {len(cannot_auto_resolve)} require human input.")
+        
+        # Approve only if all questions were handled
+        approved = len(cannot_auto_resolve) == 0
+        return GateResponse(
+            approved=approved,
+            answers=answers,
+            deferred_ids=deferred_ids,
+            auto_deferred_ids=auto_deferred_ids
+        )
+
+    def _handle_interactive(self, payload: GatePayload) -> GateResponse:
+        """Interactive mode: blocking questions MUST receive explicit human input."""
         print("Please answer the following questions (or type 'defer' to adopt the proposed assumption, or 'exit' to stop):")
         answers = {}
         deferred_ids = []
         
         for oq in payload.blocking_questions:
-            print(f"\n[{oq.id}] Question: {oq.question}")
+            # Print the question info on its own lines (P02-3 fix: label above input)
+            print(f"\n{'─'*40}")
+            print(f"[{oq.id}] Question: {oq.question}")
             if oq.proposed_assumption:
                 print(f"      Proposed Assumption: {oq.proposed_assumption}")
                 print(f"      Default if Deferred: {oq.default_if_deferred.value}")
+            print()  # Blank line before the input prompt
             
-            # Read from stdin
+            # P02-3: Flush stdout and suppress rich handlers before reading
+            sys.stdout.flush()
+            
+            # Temporarily suppress rich/logging handlers to prevent line overwrite
+            root_logger = logging.getLogger()
+            original_handlers = root_logger.handlers[:]
+            original_level = root_logger.level
+            
+            # Detach all stdout-targeting handlers during prompt
+            stdout_handlers = []
+            for h in root_logger.handlers[:]:
+                if hasattr(h, 'stream') and getattr(h, 'stream', None) is sys.stdout:
+                    stdout_handlers.append(h)
+                    root_logger.removeHandler(h)
+            
             try:
+                # Read on a clean line (P02-3: never styled label + input() on same line)
                 response = input("Your answer: ").strip()
             except (OSError, EOFError):
-                # If stdin is not available (e.g. during pytest capture or non-interactive run), we default to defer
-                print("Stdin/terminal input not available. Automatically deferring question.")
-                response = "defer"
+                # P02-2: In interactive mode, a blocked stdin is an error, not a silent defer
+                print("\n[ERROR] Stdin/terminal input not available.")
+                print("  Blocking questions require human input in interactive mode.")
+                print("  Run with --unattended to auto-adopt defaults, or provide an answers file.")
+                # Restore handlers
+                for h in stdout_handlers:
+                    root_logger.addHandler(h)
+                return GateResponse(approved=False, answers={}, deferred_ids=[])
+            finally:
+                # Restore logging handlers
+                for h in stdout_handlers:
+                    if h not in root_logger.handlers:
+                        root_logger.addHandler(h)
                 
             if response.lower() == "exit":
                 print("Exiting gate. Please edit the answers file and re-run.")
@@ -102,6 +187,7 @@ class ConsoleHumanGate:
                 print("Answered.")
                 
         # Write template answers file for convenience if it doesn't exist
+        answers_path = Path(self.answers_file)
         if not answers_path.exists():
             template = {oq.id: "" for oq in payload.blocking_questions}
             try:
@@ -113,7 +199,9 @@ class ConsoleHumanGate:
                 
         return GateResponse(approved=True, answers=answers, deferred_ids=deferred_ids)
 
+
 def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> None:
+    """Apply gate responses to the package, tagging decisions with resolved_by."""
     # Append human answers to the registry as a "gate_answers" document
     if hasattr(pkg, "source_registry") and pkg.source_registry is not None:
         new_text = "\n".join(f"[{oq_id}] {ans}" for oq_id, ans in response.answers.items() if ans)
@@ -137,6 +225,9 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
             existing_decisions.append(int(match.group(1)))
     next_dec_num = max(existing_decisions, default=0) + 1
 
+    # Build the set of auto-deferred IDs for tagging
+    auto_deferred_set = set(getattr(response, 'auto_deferred_ids', []))
+
     # 1. Update questions
     for oq in pkg.open_questions:
         if oq.id in response.answers:
@@ -149,7 +240,8 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
                 id=dec_id,
                 statement=f"Adopted resolution: {oq.answer}",
                 rationale=f"Resolved open question: {oq.question}",
-                related_ids=oq.affects
+                related_ids=oq.affects,
+                resolved_by="human"
             )
             pkg.decisions.append(dec)
             next_dec_num += 1
@@ -171,6 +263,10 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
         elif oq.id in response.deferred_ids:
             oq.status = OpenQuestionStatus.deferred
             
+            # Determine resolved_by tag
+            is_auto = oq.id in auto_deferred_set
+            resolved_by_tag = "auto_default" if is_auto else "human"
+            
             # For deferred questions: status deferred, apply default_if_deferred
             if oq.default_if_deferred == DefaultIfDeferred.adopt_assumption:
                 # Create a Decision record for this adopted assumption
@@ -179,7 +275,8 @@ def apply_gate_responses(pkg: RequirementsPackage, response: GateResponse) -> No
                     id=dec_id,
                     statement=f"Adopted default assumption: {oq.proposed_assumption}",
                     rationale=f"Deferred open question: {oq.question}",
-                    related_ids=oq.affects
+                    related_ids=oq.affects,
+                    resolved_by=resolved_by_tag
                 )
                 pkg.decisions.append(dec)
                 next_dec_num += 1
