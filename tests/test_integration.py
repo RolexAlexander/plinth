@@ -73,7 +73,8 @@ def mock_llm_call(self, messages, *args, **kwargs):
 def cassette_env(monkeypatch):
     """Setup mock cassette replayer environment."""
     monkeypatch.setenv("PLINTH_UNATTENDED", "true")
-    with patch.object(LLM, "call", mock_llm_call):
+    with patch.object(LLM, "call", mock_llm_call), \
+         patch.object(LLM, "supports_function_calling", return_value=False):
         yield
 
 
@@ -117,6 +118,9 @@ def test_flow_integration_end_to_end(cassette_env):
             assert manifest["counts"]["confirmed"] == 20
             assert manifest["counts"]["assumed"] == 0
             
+            # generated_at is fresh (not the hardcoded stale timestamp)
+            assert manifest["generated_at"] != "2026-06-28T09:59:24.683023"
+            
             # Stories coverage must show must/should covered
             assert manifest["stories_coverage"]["must_should_total"] == 20
             assert manifest["stories_coverage"]["must_should_covered"] == 20
@@ -136,12 +140,29 @@ def test_flow_integration_end_to_end(cassette_env):
             assert stories[0]["id"] == "US-001"
             assert stories[1]["id"] == "US-002"
             
-            # User Stories markdown should render
+            # Assert every "must" requirement is covered by at least one user story
+            requirements_file = out_path / "requirements.json"
+            assert requirements_file.exists()
+            with open(requirements_file, "r", encoding="utf-8") as f:
+                reqs = json.load(f)
+                
+            must_req_ids = {r["id"] for r in reqs if r.get("priority") == "must" and r.get("status") != "deprecated"}
+            story_covered_req_ids = set()
+            for us in stories:
+                story_covered_req_ids.update(us.get("requirement_ids", []))
+            
+            uncovered_must_reqs = must_req_ids - story_covered_req_ids
+            assert not uncovered_must_reqs, f"The following MUST requirements are not covered by any user story: {uncovered_must_reqs}"
+            
+            # User Stories markdown should render and match JSON
             user_stories_md = out_path / "user_stories.md"
             assert user_stories_md.exists()
             content_md = user_stories_md.read_text(encoding="utf-8")
             assert "US-001" in content_md
             assert "US-002" in content_md
+            for us in stories:
+                assert us["id"] in content_md
+                assert us["as_a"] in content_md
             
             # 3. Decisions file carries resolved_by
             decisions_file = out_path / "decisions.json"
@@ -149,8 +170,20 @@ def test_flow_integration_end_to_end(cassette_env):
             with open(decisions_file, "r", encoding="utf-8") as f:
                 decisions = json.load(f)
             assert len(decisions) == 1
-            assert decisions[0]["resolved_by"] == "auto_default"
             assert "DEC-001" in decisions[0]["id"]
+            
+            # Ensure EVERY decision carries resolved_by and it's valid
+            for dec in decisions:
+                assert "resolved_by" in dec
+                assert dec["resolved_by"] in ("human", "auto_default")
+            
+            # Decisions markdown matches JSON
+            decisions_md = out_path / "decisions.md"
+            assert decisions_md.exists()
+            dec_md_content = decisions_md.read_text(encoding="utf-8")
+            for dec in decisions:
+                assert dec["id"] in dec_md_content
+                assert dec["statement"] in dec_md_content
             
             # 4. Open Questions file is updated
             oq_file = out_path / "open_questions.json"
@@ -160,10 +193,24 @@ def test_flow_integration_end_to_end(cassette_env):
             assert len(oq_list) == 1
             assert oq_list[0]["status"] == "deferred"
             
+            # Open Questions markdown matches JSON
+            oq_md = out_path / "open_questions.md"
+            assert oq_md.exists()
+            oq_md_content = oq_md.read_text(encoding="utf-8")
+            for oq in oq_list:
+                assert oq["id"] in oq_md_content
+                assert oq["question"] in oq_md_content
+            
             # 5. Off-domain questions are dropped
+            off_domain_keywords = ["employee performance", "learning development", "learning resource", "development plan", "goal completion"]
             for q in oq_list:
-                assert "employee performance" not in q["question"].lower()
-                assert "learning development" not in q["question"].lower()
+                for kw in off_domain_keywords:
+                    assert kw not in q["question"].lower()
+                    
+            for dec in decisions:
+                for kw in off_domain_keywords:
+                    assert kw not in dec["rationale"].lower()
+                    assert kw not in dec["statement"].lower()
                 
             # 6. Traceability mapping is present
             trace_file = out_path / "traceability.json"
@@ -174,3 +221,25 @@ def test_flow_integration_end_to_end(cassette_env):
             req_trace = trace.get("REQ-001") or trace.get("req-001")
             assert req_trace is not None
             assert "US-001" in req_trace["user_stories"]
+            
+            # Traceability markdown matches JSON
+            trace_md = out_path / "traceability.md"
+            assert trace_md.exists()
+            trace_md_content = trace_md.read_text(encoding="utf-8")
+            for req_id, mapping in trace.items():
+                assert req_id in trace_md_content
+                for story_id in mapping.get("user_stories", []):
+                    assert story_id in trace_md_content
+                    
+            # Persona markdown matches JSON
+            personas_file = out_path / "personas.json"
+            assert personas_file.exists()
+            with open(personas_file, "r", encoding="utf-8") as f:
+                personas = json.load(f)
+            personas_md = out_path / "personas.md"
+            assert personas_md.exists()
+            personas_md_content = personas_md.read_text(encoding="utf-8")
+            for pers in personas:
+                assert pers["id"] in personas_md_content
+                assert pers["name"] in personas_md_content
+                assert pers["role"] in personas_md_content

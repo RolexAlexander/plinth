@@ -29,10 +29,22 @@ class AcceptanceCriterion(BaseModel):
             raise ValueError(f"Acceptance Criterion ID must match pattern ^AC-\\d+-[a-z]$: {v}")
         return v
 
+from typing import List, Optional, Any
+
 class Metric(BaseModel):
     dimension: str                   # latency | throughput | availability | ...
     target: str                      # "p95 < 2s"
     condition: Optional[str] = None     # "<= 500 concurrent agents"
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_before(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return {
+                "dimension": "performance",
+                "target": v
+            }
+        return v
 
 class Requirement(BaseModel):
     id: str                          # pattern: REQ-\d+

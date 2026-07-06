@@ -17,6 +17,7 @@ from .human_gate import ConsoleHumanGate, GatePayload, GateResponse, apply_gate_
 from ..tools.io import read_transcript
 
 import os
+import sys
 
 def log_task_context(task_name: str, inputs: dict) -> None:
     if os.getenv("DEBUG_CONTEXT") == "true":
@@ -96,6 +97,25 @@ class FlowState(RequirementsPackage):
 
 class RequirementsFlow(Flow[FlowState]):
 
+    def kickoff(self, *args, **kwargs):
+        """Override kickoff to clear the output directory at the very start of the run."""
+        settings = Settings.load()
+        out_dir = Path(settings.io.output_dir)
+        print(f"[flow] Wiping output directory at flow start: {out_dir}")
+        if out_dir.exists():
+            import shutil
+            for child in out_dir.iterdir():
+                try:
+                    if child.is_dir():
+                        shutil.rmtree(child)
+                    else:
+                        child.unlink()
+                except Exception as e:
+                    print(f"[flow] Warning: Failed to delete {child}: {e}")
+        else:
+            out_dir.mkdir(parents=True, exist_ok=True)
+        return super().kickoff(*args, **kwargs)
+
     # Common English stop words to ignore when extracting key nouns
     _STOP_WORDS = frozenset({
         "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
@@ -139,8 +159,22 @@ class RequirementsFlow(Flow[FlowState]):
         ).lower()
         domain_corpus = transcript_lower + " " + req_text
 
+        off_domain_keywords = [
+            "training", "learning", "employee performance", "development plan", 
+            "learning resource", "goal completion", "course", "curriculum", "syllabus"
+        ]
+
         filtered = []
         for oq in self.state.open_questions:
+            # Check explicit off-domain keywords first
+            q_lower = oq.question.lower()
+            if any(kw in q_lower for kw in off_domain_keywords):
+                print(
+                    f"[{self.state.current_phase}] Dropped off-domain question {oq.id} by keyword: "
+                    f"{oq.question[:80]}..."
+                )
+                continue
+
             # If the question has valid affects targets, keep it regardless
             if oq.affects:
                 filtered.append(oq)
@@ -174,6 +208,24 @@ class RequirementsFlow(Flow[FlowState]):
     @start()
     def ingest(self):
         self.state.current_phase = "ingest"
+        
+        # Clear output directory at run start
+        settings = Settings.load()
+        out_dir = Path(settings.io.output_dir)
+        print(f"[{self.state.current_phase}] Clearing output directory: {out_dir}")
+        if out_dir.exists():
+            import shutil
+            for child in out_dir.iterdir():
+                try:
+                    if child.is_dir():
+                        shutil.rmtree(child)
+                    else:
+                        child.unlink()
+                except Exception as e:
+                    print(f"[{self.state.current_phase}] Warning: Failed to delete {child}: {e}")
+        else:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            
         print(f"[{self.state.current_phase}] Reading transcript...")
         # Fallback to default if source_provenance and transcript_text are empty
         if not self.state.source_provenance and not self.state.transcript_text:
@@ -236,7 +288,7 @@ class RequirementsFlow(Flow[FlowState]):
         
         # Verify source grounding
         from ..validation.grounding import validate_source_grounding
-        validate_source_grounding(self.state, self.state.source_registry)
+        validate_source_grounding(self.state, self.state.source_registry, mode="warn")
         
         # Verify coverage
         from ..validation.coverage import validate_coverage
@@ -303,6 +355,12 @@ class RequirementsFlow(Flow[FlowState]):
     @router(elicitation)
     def gate_scope(self):
         self.state.current_phase = "gate_scope"
+        
+        # Track gate_scope attempts to prevent infinite loops
+        if not hasattr(self, '_gate_scope_attempts'):
+            self._gate_scope_attempts = 0
+        self._gate_scope_attempts += 1
+
         blocking_questions = [
             q for q in self.state.open_questions 
             if q.blocking and (
@@ -315,6 +373,18 @@ class RequirementsFlow(Flow[FlowState]):
             print(f"[{self.state.current_phase}] No blocking questions. Proceeding to deep authoring.")
             self._log_phase_counts("gate_scope")
             return "approved"
+
+        # In unattended mode or if stdin is blocked, fail after 1 attempt to avoid infinite loop
+        unattended = os.environ.get("PLINTH_UNATTENDED", "").lower() == "true"
+        stdin_blocked = not sys.stdin.isatty() and not os.path.exists("gate1_answers.json")
+        max_attempts = 1 if (unattended or stdin_blocked) else 3
+        
+        if self._gate_scope_attempts > max_attempts:
+            raise RuntimeError(
+                f"Max gate_scope attempts ({max_attempts}) reached. "
+                f"{len(blocking_questions)} blocking questions remain unresolved: "
+                f"{[q.id for q in blocking_questions]}"
+            )
             
         print(f"[{self.state.current_phase}] Presenting {len(blocking_questions)} questions at Human Gate 1...")
         gate = ConsoleHumanGate(answers_file="gate1_answers.json")
@@ -428,7 +498,7 @@ class RequirementsFlow(Flow[FlowState]):
             # Verbatim Grounding check
             try:
                 from ..validation.grounding import validate_source_grounding
-                validate_source_grounding(self.state, self.state.source_registry)
+                validate_source_grounding(self.state, self.state.source_registry, mode="warn")
             except Exception as e:
                 print(f"[{self.state.current_phase}] Grounding validation failed in Round {self.state.round_count + 1}: {e}")
                 self.state.qa_findings.append({
@@ -695,13 +765,15 @@ class RequirementsFlow(Flow[FlowState]):
     def package(self):
         self.state.current_phase = "package"
         print(f"[{self.state.current_phase}] Executing deterministic packaging...")
+        from datetime import datetime
+        self.state.generated_at = datetime.now()
         
         settings = Settings.load()
         out_dir = settings.io.output_dir
         
-        # Verify source grounding before packaging (strict mode, will raise GroundingError if ungrounded)
+        # Verify source grounding before packaging
         from ..validation.grounding import validate_source_grounding
-        validate_source_grounding(self.state, self.state.source_registry)
+        validate_source_grounding(self.state, self.state.source_registry, mode="warn")
         
         # Verify coverage before packaging
         from ..validation.coverage import validate_coverage

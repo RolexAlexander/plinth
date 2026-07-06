@@ -136,7 +136,7 @@ class ConsoleHumanGate:
         
         for oq in payload.blocking_questions:
             # Print the question info on its own lines (P02-3 fix: label above input)
-            print(f"\n{'─'*40}")
+            print(f"\n{'-'*40}")
             print(f"[{oq.id}] Question: {oq.question}")
             if oq.proposed_assumption:
                 print(f"      Proposed Assumption: {oq.proposed_assumption}")

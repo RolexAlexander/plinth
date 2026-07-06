@@ -40,8 +40,15 @@ def kickoff():
     flow.state.source_provenance = [transcript_path]
     
     # Run
-    flow.kickoff()
-    print("Flow completed successfully!")
+    try:
+        flow.kickoff()
+        print("Flow completed successfully!")
+    except Exception as e:
+        import traceback
+        current_phase = getattr(flow.state, "current_phase", "unknown")
+        print(f"\n[ERROR] Flow failed during phase: {current_phase}", file=sys.stderr)
+        traceback.print_exc()
+        sys.exit(1)
 
 def plot():
     """Plot the flow diagram."""

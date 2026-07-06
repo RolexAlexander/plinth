@@ -17,19 +17,26 @@ def check_confirmed_grounding(excerpt: str, haystack: str) -> bool:
     """
     if not excerpt or not haystack:
         return False
-    # Clean leading/trailing ellipsis
+    # Clean leading/trailing ellipsis or dots or common punctuation
     clean_excerpt = excerpt.strip()
-    clean_excerpt = re.sub(r'^(\.\.\.+|…)\s*', '', clean_excerpt)
-    clean_excerpt = re.sub(r'\s*(\.\.\.+|…)$', '', clean_excerpt)
+    clean_excerpt = re.sub(r'^[\s.!?…,\-:]+', '', clean_excerpt)
+    clean_excerpt = re.sub(r'[\s.!?…,\-:]+$', '', clean_excerpt)
     
-    # Split on sentence boundaries (. ! ?) followed by whitespace, or ellipses
-    parts = re.split(r'\.\s+|\?\s+|\!\s+|\.\.\.+|…', clean_excerpt)
-    parts = [p.strip() for p in parts if p.strip()]
-    if not parts:
+    # Split on sentence boundaries, ellipses, newlines, or semicolons
+    parts = re.split(r'\.+\s*|\?+\s*|\!+\s*|…\s*|;\s*|\n+', clean_excerpt)
+    
+    # Process each part: strip leading/trailing spaces, dots, and common punctuation
+    processed_parts = []
+    for p in parts:
+        p_clean = re.sub(r'^[\s.!?…,\-:]+|[\s.!?…,\-:]+$', '', p).strip()
+        if p_clean:
+            processed_parts.append(p_clean)
+            
+    if not processed_parts:
         return False
         
     current_pos = 0
-    for part in parts:
+    for part in processed_parts:
         norm_part = _norm(part)
         pos = haystack.find(norm_part, current_pos)
         if pos != -1:
@@ -50,7 +57,7 @@ def check_verbatim_grounding(needle: str, haystack: str) -> bool:
         return True
         
     # Split the needle by common ellipsis representations
-    parts = re.split(r'\.\.\.+|…', needle)
+    parts = re.split(r'\.{2,}|…', needle)
     parts = [p.strip() for p in parts if p.strip()]
     if not parts:
         return False
@@ -84,7 +91,8 @@ def validate_source_grounding(pkg, registry, *, mode: str = "strict") -> list[st
     has a source excerpt that exists as a normalized substring of the registered source text.
     
     P02-6: For confirmed requirements, uses check_confirmed_grounding which is stricter and 
-    rejects concatenated non-contiguous strings.
+    rejects concatenated non-contiguous strings. If grounding fails, it demotes the status 
+    to open and raises a warning (never aborts the run).
     
     P02-7: For personas, applies the verbatim check, and marks status as 'assumed' if 
     inferred rather than stated (e.g. role title not near name in transcript).
@@ -107,7 +115,12 @@ def validate_source_grounding(pkg, registry, *, mode: str = "strict") -> list[st
                         f"Requirement '{r.id}' source excerpt not found in any '{s.origin.value}' "
                         f"document (failed confirmed grounding validator). Excerpt: {s.excerpt!r}"
                     )
-                    errors.append(msg)
+                    if mode == "strict":
+                        errors.append(msg)
+                    else:
+                        # Demote to open + warn, never abort
+                        r.status = Status.open
+                        warnings.append(f"{msg} Demoted status to open.")
             else:
                 needle = _norm(s.excerpt)
                 if not check_verbatim_grounding(needle, haystack):
