@@ -87,6 +87,31 @@ def prune_invalid_affects(pkg: RequirementsPackage) -> None:
                 new_affected_by.append(mapped)
         r.affected_by = list(set(new_affected_by))
 
+def make_ac_ids_globally_unique(pkg: RequirementsPackage) -> None:
+    # Gather all existing AC IDs from requirements
+    req_ac_ids = set()
+    for r in pkg.requirements:
+        for ac in r.acceptance_criteria:
+            req_ac_ids.add(ac.id)
+            
+    # Assign unique AC IDs to user stories
+    import re
+    used_ac_numbers = set()
+    for r_ac_id in req_ac_ids:
+        match = re.match(r"^AC-(\d+)-[a-z]$", r_ac_id)
+        if match:
+            used_ac_numbers.add(int(match.group(1)))
+            
+    next_ac_num = max(used_ac_numbers, default=0) + 100
+    if next_ac_num < 500:
+        next_ac_num = 500
+        
+    for us in pkg.user_stories:
+        for idx, ac in enumerate(us.acceptance_criteria):
+            suffix = chr(ord('a') + (idx % 26))
+            ac.id = f"AC-{next_ac_num:03d}-{suffix}"
+        next_ac_num += 1
+
 class FlowState(RequirementsPackage):
     current_phase: str = "ingest"
     round_count: int = 0
@@ -683,6 +708,7 @@ class RequirementsFlow(Flow[FlowState]):
         stories_out = stories_res.pydantic
         if stories_out and stories_out.user_stories:
             self.state.user_stories = stories_out.user_stories
+            make_ac_ids_globally_unique(self.state)
             print(f"[{self.state.current_phase}] Generated {len(self.state.user_stories)} user stories.")
             
             # Check coverage: every must/should requirement should be referenced
@@ -767,6 +793,9 @@ class RequirementsFlow(Flow[FlowState]):
         print(f"[{self.state.current_phase}] Executing deterministic packaging...")
         from datetime import datetime
         self.state.generated_at = datetime.now()
+        
+        # Ensure all user story AC IDs are globally unique to pass X5 check
+        make_ac_ids_globally_unique(self.state)
         
         settings = Settings.load()
         out_dir = settings.io.output_dir
