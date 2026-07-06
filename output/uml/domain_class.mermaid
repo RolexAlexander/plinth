@@ -1,0 +1,171 @@
+classDiagram
+  class ENT_User {
+    +UUID id
+    +String email
+    +String (nullable) password_hash
+    +Enum: ['EMAIL', 'GOOGLE', 'APPLE'] auth_provider
+    +String (nullable) provider_user_id
+    +String (nullable) full_name
+    +String (nullable) phone_number
+    +Timestamp created_at
+    +Timestamp updated_at
+  }
+  class ENT_Customer {
+    +UUID id
+    +UUID user_id
+    +String stripe_customer_id
+    +Integer loyalty_points
+  }
+  ENT_Customer "1" --> "1" ENT_User : user_id
+  class ENT_Staff {
+    +UUID id
+    +UUID user_id
+    +Enum: ['OWNER', 'MANAGER', 'ATTENDANT'] role
+    +String (nullable) totp_secret_encrypted
+  }
+  ENT_Staff "1" --> "1" ENT_User : user_id
+  class ENT_Location {
+    +UUID id
+    +String name
+    +String address
+    +String timezone
+    +String stripe_connect_account_id
+    +Boolean idle_fee_enabled
+    +Integer (nullable) idle_fee_rate_cents
+    +Integer (nullable) idle_fee_grace_period_minutes
+    +Timestamp created_at
+    +Timestamp updated_at
+  }
+  class ENT_StaffLocationAssignment {
+    +UUID staff_id
+    +UUID location_id
+  }
+  ENT_StaffLocationAssignment "*" --> "1" ENT_Staff : staff_id
+  ENT_StaffLocationAssignment "*" --> "1" ENT_Location : location_id
+  class ENT_Machine {
+    +UUID id
+    +UUID location_id
+    +String display_name
+    +String qr_code_id
+    +Enum: ['WASHER', 'DRYER'] type
+    +String (nullable) model_description
+    +Enum: ['IDLE', 'RUNNING', 'OUT_OF_ORDER'] current_status
+    +Timestamp installed_at
+  }
+  ENT_Machine "*" --> "1" ENT_Location : location_id
+  class ENT_CycleType {
+    +UUID id
+    +String name
+    +String (nullable) description
+    +Enum: ['WASHER', 'DRYER'] machine_type
+    +Integer price_cents
+    +Integer duration_minutes
+    +Boolean is_premium
+    +Boolean is_standard
+  }
+  class ENT_LaundrySession {
+    +UUID id
+    +UUID machine_id
+    +UUID (nullable) customer_id
+    +UUID cycle_type_id
+    +Enum: ['PENDING', 'RUNNING', 'COMPLETED', 'FAULTED'] status
+    +Timestamp started_at
+    +Timestamp scheduled_end_at
+    +Timestamp (nullable) actual_end_at
+    +Timestamp (nullable) door_opened_at
+  }
+  ENT_LaundrySession "*" --> "1" ENT_Machine : machine_id
+  ENT_LaundrySession "*" --> "1" ENT_Customer : customer_id
+  ENT_LaundrySession "*" --> "1" ENT_CycleType : cycle_type_id
+  class ENT_Transaction {
+    +UUID id
+    +UUID (nullable) laundry_session_id
+    +UUID (nullable) customer_id
+    +UUID location_id
+    +String stripe_charge_id
+    +Integer amount_cents
+    +Integer platform_fee_cents
+    +Integer net_amount_cents
+    +String currency
+    +Enum: ['CYCLE_PAYMENT', 'IDLE_FEE', 'SUBSCRIPTION', 'RESERVATION_FEE', 'CANCELLATION_FEE'] type
+    +Enum: ['SUCCEEDED', 'PENDING', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED'] status
+    +Timestamp created_at
+  }
+  ENT_Transaction "*" --> "1" ENT_LaundrySession : laundry_session_id
+  ENT_Transaction "*" --> "1" ENT_Customer : customer_id
+  ENT_Transaction "*" --> "1" ENT_Location : location_id
+  class ENT_RefundRequest {
+    +UUID id
+    +UUID transaction_id
+    +UUID requested_by_customer_id
+    +UUID (nullable) reviewed_by_staff_id
+    +Enum: ['PENDING', 'APPROVED', 'DENIED'] status
+    +String (nullable) reason_text
+    +Timestamp requested_at
+    +Timestamp (nullable) reviewed_at
+  }
+  ENT_RefundRequest "1" --> "1" ENT_Transaction : transaction_id
+  ENT_RefundRequest "*" --> "1" ENT_Customer : requested_by_customer_id
+  ENT_RefundRequest "*" --> "1" ENT_Staff : reviewed_by_staff_id
+  class ENT_Subscription {
+    +UUID id
+    +UUID customer_id
+    +UUID location_id
+    +String stripe_subscription_id
+    +Enum: ['ACTIVE', 'CANCELED', 'PAST_DUE'] status
+    +Timestamp start_date
+    +Timestamp current_period_end
+    +Timestamp created_at
+    +Timestamp updated_at
+  }
+  ENT_Subscription "*" --> "1" ENT_Customer : customer_id
+  ENT_Subscription "*" --> "1" ENT_Location : location_id
+  class ENT_MaintenanceLog {
+    +UUID id
+    +UUID machine_id
+    +UUID created_by_staff_id
+    +String notes
+    +Enum: ['FAULT_REPORTED', 'REPAIR_NOTE', 'STATUS_CHANGE'] entry_type
+    +Timestamp created_at
+  }
+  ENT_MaintenanceLog "*" --> "1" ENT_Machine : machine_id
+  ENT_MaintenanceLog "*" --> "1" ENT_Staff : created_by_staff_id
+  class ENT_Reservation {
+    +UUID id
+    +UUID location_id
+    +UUID created_by_staff_id
+    +Timestamp start_time
+    +Timestamp end_time
+    +Enum: ['CONFIRMED', 'CANCELLED', 'COMPLETED'] status
+    +String (nullable) cancellation_reason
+    +String (nullable) notes
+  }
+  ENT_Reservation "*" --> "1" ENT_Location : location_id
+  ENT_Reservation "*" --> "1" ENT_Staff : created_by_staff_id
+  class ENT_ReservedMachine {
+    +UUID reservation_id
+    +UUID machine_id
+  }
+  ENT_ReservedMachine "*" --> "1" ENT_Reservation : reservation_id
+  ENT_ReservedMachine "*" --> "1" ENT_Machine : machine_id
+  class ENT_WaitlistEntry {
+    +UUID id
+    +UUID location_id
+    +UUID customer_id
+    +Enum: ['WASHER', 'DRYER'] machine_type
+    +Enum: ['WAITING', 'NOTIFIED', 'EXPIRED', 'CLAIMED', 'CANCELLED'] status
+    +Timestamp created_at
+    +Timestamp (nullable) notified_at
+    +Timestamp (nullable) expires_at
+  }
+  ENT_WaitlistEntry "*" --> "1" ENT_Location : location_id
+  ENT_WaitlistEntry "*" --> "1" ENT_Customer : customer_id
+  class ENT_PromotionalNotification {
+    +UUID id
+    +UUID location_id
+    +UUID sent_by_staff_id
+    +String message_body
+    +Timestamp sent_at
+  }
+  ENT_PromotionalNotification "*" --> "1" ENT_Location : location_id
+  ENT_PromotionalNotification "*" --> "1" ENT_Staff : sent_by_staff_id

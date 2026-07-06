@@ -1,0 +1,768 @@
+{
+  "REQ-001": {
+    "statement": "The system shall allow a customer to initiate a laundry session for a specific machine by scanning a QR code located on that machine.",
+    "user_stories": [
+      "US-001"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-018"
+    ]
+  },
+  "REQ-002": {
+    "statement": "The system shall allow customers to pay for laundry cycles using a digital payment method within the application.",
+    "user_stories": [
+      "US-001"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-008"
+    ]
+  },
+  "REQ-003": {
+    "statement": "The system shall send a push notification to the customer's device when their laundry cycle is complete.",
+    "user_stories": [
+      "US-003"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": [
+      "OQ-004"
+    ]
+  },
+  "REQ-004": {
+    "statement": "The system shall provide a web-based dashboard for laundromat owners and staff.",
+    "user_stories": [
+      "US-006"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Staff",
+      "ENT-Location"
+    ],
+    "open_questions": [
+      "OQ-016"
+    ]
+  },
+  "REQ-005": {
+    "statement": "The owner dashboard shall display the real-time status of all machines in a selected location.",
+    "user_stories": [
+      "US-008"
+    ],
+    "entities": [
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-007",
+      "OQ-009"
+    ]
+  },
+  "REQ-006": {
+    "statement": "The owner dashboard shall provide access to revenue reports.",
+    "user_stories": [
+      "US-009"
+    ],
+    "entities": [
+      "ENT-Location"
+    ],
+    "open_questions": [
+      "OQ-005",
+      "OQ-012"
+    ]
+  },
+  "REQ-007": {
+    "statement": "The owner dashboard shall display maintenance alerts for machines that have faulted.",
+    "user_stories": [
+      "US-013"
+    ],
+    "entities": [
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-008": {
+    "statement": "The system shall track and report the status of each machine, including 'idle', 'running', and 'out of order'.",
+    "user_stories": [
+      "US-002"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-006",
+      "OQ-007"
+    ]
+  },
+  "REQ-009": {
+    "statement": "The system's IoT controllers shall use the MQTT protocol to communicate status updates to the backend.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-010": {
+    "statement": "IoT controllers shall publish a status update at least every 10 seconds.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-011": {
+    "statement": "The system shall use Stripe Connect for payment processing to handle fund settlement to individual laundromat owners.",
+    "user_stories": [
+      "US-021"
+    ],
+    "entities": [
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-012": {
+    "statement": "The system shall provide a Progressive Web App (PWA) to allow customers to use the service without installing a native mobile application.",
+    "user_stories": [
+      "US-001"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-013": {
+    "statement": "The customer application shall display a visual map of the laundromat, color-coding machines by status: green for available, yellow for in-use, and red for out-of-order.",
+    "user_stories": [
+      "US-002"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-014": {
+    "statement": "The system shall physically start a machine's cycle within 5 seconds of a successful payment confirmation.",
+    "user_stories": [
+      "US-001"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-015": {
+    "statement": "The system shall allow customers to complete a transaction as a guest without creating an account.",
+    "user_stories": [
+      "US-001"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Machine",
+      "ENT-Transaction"
+    ],
+    "open_questions": []
+  },
+  "REQ-016": {
+    "statement": "The system shall provide an optional customer account that allows access to features like loyalty points.",
+    "user_stories": [
+      "US-005"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Transaction",
+      "ENT-Subscription"
+    ],
+    "open_questions": []
+  },
+  "REQ-017": {
+    "statement": "The system shall implement a loyalty program for registered customers.",
+    "user_stories": [
+      "US-015"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-018": {
+    "statement": "Registered customers shall earn one loyalty point for every full dollar spent (e.g., a $3.50 purchase earns 3 points), and can redeem 100 points for a free standard wash.",
+    "user_stories": [
+      "US-015"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Transaction"
+    ],
+    "open_questions": []
+  },
+  "REQ-019": {
+    "statement": "The system shall offer a monthly subscription plan ('Spin Pass') for customers.",
+    "user_stories": [
+      "US-016"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Subscription"
+    ],
+    "open_questions": [
+      "OQ-013"
+    ]
+  },
+  "REQ-020": {
+    "statement": "The 'Spin Pass' subscription shall provide unlimited standard washes at a single, designated location for a monthly fee of $25.",
+    "user_stories": [
+      "US-016"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Location",
+      "ENT-Subscription"
+    ],
+    "open_questions": [
+      "OQ-013"
+    ]
+  },
+  "REQ-021": {
+    "statement": "'Spin Pass' subscribers shall receive a 50% discount on premium cycle types.",
+    "user_stories": [
+      "US-016"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Subscription"
+    ],
+    "open_questions": []
+  },
+  "REQ-022": {
+    "statement": "The system shall send a reminder notification to a customer if their completed laundry has not been collected within 5 minutes of the cycle finishing.",
+    "user_stories": [
+      "US-004"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-004"
+    ]
+  },
+  "REQ-023": {
+    "statement": "The system shall support applying an idle fee for laundry not collected after a pre-defined duration has passed since the cycle's completion.",
+    "user_stories": [
+      "US-026"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-014"
+    ]
+  },
+  "REQ-024": {
+    "statement": "Idle fees shall be billed in full-minute increments, where any partial minute incurs the full per-minute charge (e.g., 90 seconds of idle time is billed as 2 minutes). The rate shall be configurable by the owner, with a suggested default of $0.25 per minute.",
+    "user_stories": [
+      "US-026"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-014"
+    ]
+  },
+  "REQ-025": {
+    "statement": "The idle fee feature shall be configurable (enabled/disabled) on a per-location basis by the laundromat owner.",
+    "user_stories": [
+      "US-026"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-026": {
+    "statement": "The owner dashboard shall include a maintenance log for each machine.",
+    "user_stories": [
+      "US-014"
+    ],
+    "entities": [
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-001"
+    ]
+  },
+  "REQ-027": {
+    "statement": "The system shall implement role-based access control (RBAC) for the owner dashboard to restrict access to data and functionality based on user role.",
+    "user_stories": [
+      "US-007"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Staff",
+      "ENT-Location"
+    ],
+    "open_questions": [
+      "OQ-001",
+      "OQ-003"
+    ]
+  },
+  "REQ-028": {
+    "statement": "The 'Owner' role shall have full access to all data and functionality for all locations associated with their account, including aggregate views.",
+    "user_stories": [
+      "US-007",
+      "US-012"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Staff",
+      "ENT-Location"
+    ],
+    "open_questions": [
+      "OQ-011"
+    ]
+  },
+  "REQ-029": {
+    "statement": "The 'Manager' role shall have full access to all data and functionality, but only for their specifically assigned location(s).",
+    "user_stories": [
+      "US-007"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Staff",
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-030": {
+    "statement": "The 'Attendant' role shall be able to view machine status and change a machine's status to 'out of order' by creating a maintenance log entry, but shall have no access to financial data.",
+    "user_stories": [
+      "US-007",
+      "US-014"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Staff",
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-031": {
+    "statement": "The system shall allow customers to register and authenticate using an email address and password.",
+    "user_stories": [
+      "US-005"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Transaction",
+      "ENT-Subscription"
+    ],
+    "open_questions": []
+  },
+  "REQ-032": {
+    "statement": "The system shall allow customers to register and authenticate using their Google account (social login).",
+    "user_stories": [
+      "US-005"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Transaction",
+      "ENT-Subscription"
+    ],
+    "open_questions": []
+  },
+  "REQ-033": {
+    "statement": "The system shall allow customers to register and authenticate using their Apple ID (social login).",
+    "user_stories": [
+      "US-005"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Transaction",
+      "ENT-Subscription"
+    ],
+    "open_questions": []
+  },
+  "REQ-034": {
+    "statement": "The system shall enforce Time-based One-Time Password (TOTP) two-factor authentication (2FA) for all owner dashboard users.",
+    "user_stories": [
+      "US-006"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Staff",
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-035": {
+    "statement": "The platform shall collect a 7% service fee from each transaction, with the remainder settling to the laundromat owner's connected account.",
+    "user_stories": [
+      "US-021"
+    ],
+    "entities": [
+      "ENT-Location",
+      "ENT-Transaction"
+    ],
+    "open_questions": []
+  },
+  "REQ-036": {
+    "statement": "Payouts of collected funds to laundromat owners shall occur on a two-day rolling basis.",
+    "user_stories": [
+      "US-021"
+    ],
+    "entities": [
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-037": {
+    "statement": "The system shall allow customers to request a refund for a transaction through the application.",
+    "user_stories": [
+      "US-018"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine",
+      "ENT-Transaction"
+    ],
+    "open_questions": []
+  },
+  "REQ-038": {
+    "statement": "The owner dashboard shall allow authorized users (Manager or Owner) to approve or deny pending refund requests.",
+    "user_stories": [
+      "US-019"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-039": {
+    "statement": "The IoT controllers must be able to buffer at least 4 hours of status events to handle network connectivity outages.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-040": {
+    "statement": "The system shall allow customers to start machines during an internet outage.",
+    "user_stories": [],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-017"
+    ]
+  },
+  "REQ-041": {
+    "statement": "The customer-facing application (native and PWA) shall be compliant with Web Content Accessibility Guidelines (WCAG) 2.1 Level AA.",
+    "user_stories": [
+      "US-025"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-042": {
+    "statement": "The customer-facing application shall support English and Spanish languages.",
+    "user_stories": [
+      "US-022"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-043": {
+    "statement": "Machine status changes must be reflected in the customer and owner applications within 2 seconds of the corresponding event being published by the IoT device.",
+    "user_stories": [
+      "US-002"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-044": {
+    "statement": "The owner dashboard shall achieve initial data load in under 3 seconds.",
+    "user_stories": [
+      "US-008"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-045": {
+    "statement": "The public-facing APIs shall achieve a monthly uptime of at least 99.9%.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-046": {
+    "statement": "The system shall allow customers to join a virtual waitlist for a specific type of machine (e.g., front-load washer) when none are available.",
+    "user_stories": [
+      "US-020"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-047": {
+    "statement": "The system shall notify the first customer in a waitlist queue via push notification when a matching machine becomes available.",
+    "user_stories": [
+      "US-020"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-004",
+      "OQ-010"
+    ]
+  },
+  "REQ-048": {
+    "statement": "A customer notified from the waitlist shall have 5 minutes to start a cycle on an available machine. If they do not claim a machine in time, their spot is forfeited and the next person in the queue is notified. If there are no more users in the queue, the machine becomes generally available.",
+    "user_stories": [
+      "US-020"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-049": {
+    "statement": "All financial transaction data must be retained for a minimum of 7 years.",
+    "user_stories": [
+      "US-023"
+    ],
+    "entities": [
+      "ENT-Transaction"
+    ],
+    "open_questions": []
+  },
+  "REQ-050": {
+    "statement": "Raw machine telemetry event data shall be purged after 90 days, but daily aggregated telemetry data shall be retained indefinitely.",
+    "user_stories": [
+      "US-023"
+    ],
+    "entities": [
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-051": {
+    "statement": "All network traffic between clients (app, dashboard, IoT) and backend servers must be encrypted using TLS 1.3.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-Customer"
+    ],
+    "open_questions": []
+  },
+  "REQ-052": {
+    "statement": "Personally Identifiable Information (PII) must be encrypted at rest using AES-256.",
+    "user_stories": [
+      "US-005"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Transaction",
+      "ENT-Subscription"
+    ],
+    "open_questions": []
+  },
+  "REQ-053": {
+    "statement": "The system shall allow authorized users to reserve a group of specific machines for a defined time window in a single operation.",
+    "user_stories": [
+      "US-027"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Staff",
+      "ENT-Location",
+      "ENT-Machine",
+      "ENT-Reservation"
+    ],
+    "open_questions": [
+      "OQ-002",
+      "OQ-019"
+    ]
+  },
+  "REQ-054": {
+    "statement": "Reserved machines shall be blocked from general availability in the customer application during their reservation window.",
+    "user_stories": [
+      "US-027"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Location",
+      "ENT-Machine",
+      "ENT-Reservation"
+    ],
+    "open_questions": []
+  },
+  "REQ-055": {
+    "statement": "A 50% cancellation fee shall be charged if a machine reservation is cancelled less than two hours before its scheduled start time, based on a yet-to-be-defined reservation cost.",
+    "user_stories": [
+      "US-027"
+    ],
+    "entities": [
+      "ENT-Location",
+      "ENT-Machine",
+      "ENT-Reservation"
+    ],
+    "open_questions": [
+      "OQ-020"
+    ]
+  },
+  "REQ-056": {
+    "statement": "The owner dashboard shall provide a revenue analytics page with visualizations.",
+    "user_stories": [
+      "US-010"
+    ],
+    "entities": [
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": [
+      "OQ-015"
+    ]
+  },
+  "REQ-057": {
+    "statement": "The system shall allow owners to export revenue and transaction data to a CSV file.",
+    "user_stories": [
+      "US-011"
+    ],
+    "entities": [
+      "ENT-Location",
+      "ENT-Transaction"
+    ],
+    "open_questions": [
+      "OQ-003",
+      "OQ-012"
+    ]
+  },
+  "REQ-058": {
+    "statement": "The customer API must be rate-limited to 100 requests per minute per user.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-059": {
+    "statement": "The system shall allow administrators to define different laundry cycle types (e.g., Normal, Delicate, Heavy-Duty) with associated prices and durations.",
+    "user_stories": [
+      "US-001"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-060": {
+    "statement": "The system shall allow a laundromat owner to send promotional notifications to registered customers of a specific location.",
+    "user_stories": [
+      "US-017"
+    ],
+    "entities": [
+      "ENT-Customer",
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-061": {
+    "statement": "The system shall generate a maintenance alert visible within the owner dashboard when a machine reports a fault.",
+    "user_stories": [
+      "US-013"
+    ],
+    "entities": [
+      "ENT-Staff",
+      "ENT-Location",
+      "ENT-Machine"
+    ],
+    "open_questions": []
+  },
+  "REQ-062": {
+    "statement": "The system backend shall maintain a local payment ledger to ensure the owner dashboard can display revenue data independently of the payment processor's API latency.",
+    "user_stories": [
+      "US-009"
+    ],
+    "entities": [
+      "ENT-Location"
+    ],
+    "open_questions": []
+  },
+  "REQ-063": {
+    "statement": "The system API must support at least 500 concurrent users per location without performance degradation.",
+    "user_stories": [
+      "US-024"
+    ],
+    "entities": [
+      "ENT-User",
+      "ENT-Customer",
+      "ENT-Location"
+    ],
+    "open_questions": []
+  }
+}

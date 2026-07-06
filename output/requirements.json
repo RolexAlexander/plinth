@@ -1,0 +1,1911 @@
+[
+  {
+    "id": "REQ-001",
+    "type": "functional",
+    "statement": "The system shall allow a customer to initiate a laundry session for a specific machine by scanning a QR code located on that machine.",
+    "rationale": "Provides a quick, frictionless way for customers to select a machine and begin the payment process without manual entry.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "We want to let customers walk in, scan a QR code on any machine, pay from their phone, and get notified when their cycle is done."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Every machine has a QR code."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-001-a",
+        "given": "a customer has the SpinCycle application open",
+        "when": "they scan a valid QR code on a laundry machine",
+        "then": "the application navigates to the control screen for that specific machine."
+      },
+      {
+        "id": "AC-001-b",
+        "given": "a user does not have the app installed",
+        "when": "they scan a valid QR code on a laundry machine using their phone's native camera app",
+        "then": "they are directed to the Progressive Web App (PWA) to continue the process."
+      }
+    ],
+    "depends_on": [],
+    "affected_by": [
+      "OQ-018"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-002",
+    "type": "functional",
+    "statement": "The system shall allow customers to pay for laundry cycles using a digital payment method within the application.",
+    "rationale": "Core functionality to enable a cashless laundromat, which reduces owner overhead and solves issues like coin jams.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "pay from their phone"
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "Going cashless would be huge."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-002-a",
+        "given": "a customer has selected a machine and a cycle type",
+        "when": "they provide valid payment information and confirm the transaction",
+        "then": "the payment is successfully processed and the machine is commanded to start."
+      }
+    ],
+    "depends_on": [
+      "REQ-011"
+    ],
+    "affected_by": [
+      "OQ-008"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-003",
+    "type": "functional",
+    "statement": "The system shall send a push notification to the customer's device when their laundry cycle is complete.",
+    "rationale": "Improves customer experience by allowing them to leave the premises without worrying about when to return for their laundry.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "and get notified when their cycle is done."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "When the cycle ends, they get a push notification saying \"Your laundry is done at Machine W-07.\""
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-003-a",
+        "given": "a customer has a cycle running",
+        "when": "the machine signals the end of the cycle",
+        "then": "the customer receives a push notification indicating the cycle is complete and which machine it was."
+      }
+    ],
+    "depends_on": [
+      "REQ-008"
+    ],
+    "affected_by": [
+      "OQ-004"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-004",
+    "type": "functional",
+    "statement": "The system shall provide a web-based dashboard for laundromat owners and staff.",
+    "rationale": "Provides a centralized interface for owners to manage their business, view analytics, and monitor operations.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "On the owner side, Dana and folks like her need a dashboard showing real-time machine status, revenue reports, and maintenance alerts."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-004-a",
+        "given": "an authorized owner or staff member has valid credentials",
+        "when": "they navigate to the dashboard URL and log in",
+        "then": "they are presented with the main dashboard interface."
+      }
+    ],
+    "depends_on": [],
+    "affected_by": [
+      "OQ-016"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-005",
+    "type": "functional",
+    "statement": "The owner dashboard shall display the real-time status of all machines in a selected location.",
+    "rationale": "Gives owners immediate visibility into their floor operations without needing to be physically present.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "...a dashboard showing real-time machine status..."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "A live floor map \u2014 same as the customer but with more detail."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-005-a",
+        "given": "an owner is viewing their location dashboard",
+        "when": "a machine becomes idle",
+        "then": "the dashboard updates to show that machine's status as 'idle' within the defined latency threshold."
+      },
+      {
+        "id": "AC-005-b",
+        "given": "an owner is viewing their location dashboard",
+        "when": "a customer starts a machine",
+        "then": "the dashboard updates to show that machine's status as 'running' and displays the remaining cycle time."
+      },
+      {
+        "id": "AC-005-c",
+        "given": "an owner is viewing their location dashboard",
+        "when": "a machine has a status of 'out of order'",
+        "then": "the dashboard updates to show that machine's status as 'out of order' within the defined latency threshold."
+      }
+    ],
+    "depends_on": [
+      "REQ-004",
+      "REQ-008"
+    ],
+    "affected_by": [
+      "OQ-007",
+      "OQ-009"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-006",
+    "type": "functional",
+    "statement": "The owner dashboard shall provide access to revenue reports.",
+    "rationale": "Allows owners to track financial performance and make informed business decisions.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "...revenue reports..."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "Revenue today versus yesterday versus same day last week."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-006-a",
+        "given": "an owner with financial permissions is logged into the dashboard",
+        "when": "they navigate to the revenue reporting section",
+        "then": "they can view key metrics such as revenue for today, yesterday, and the same day last week."
+      }
+    ],
+    "depends_on": [
+      "REQ-004"
+    ],
+    "affected_by": [
+      "OQ-012",
+      "OQ-005"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-007",
+    "type": "functional",
+    "statement": "The owner dashboard shall display maintenance alerts for machines that have faulted.",
+    "rationale": "Enables proactive maintenance, reducing machine downtime and costly repairs.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "...maintenance alerts."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "Alerts for machines that have faulted."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-007-a",
+        "given": "an owner is logged into the dashboard",
+        "when": "a machine's IoT controller reports a fault code",
+        "then": "a maintenance alert for that machine is displayed on the dashboard."
+      }
+    ],
+    "depends_on": [
+      "REQ-004"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-008",
+    "type": "functional",
+    "statement": "The system shall track and report the status of each machine, including 'idle', 'running', and 'out of order'.",
+    "rationale": "This is a fundamental capability that underpins real-time maps for customers, dashboards for owners, and notifications.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "Each machine should report whether it's idle, running, or out of order."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-008-a",
+        "given": "a machine is powered on and connected but not in a cycle",
+        "when": "the system receives a status update from its IoT controller",
+        "then": "the machine's status is recorded as 'idle'."
+      },
+      {
+        "id": "AC-008-b",
+        "given": "a machine is in an active, paid cycle",
+        "when": "the system receives a status update from its IoT controller",
+        "then": "the machine's status is recorded as 'running'."
+      },
+      {
+        "id": "AC-008-c",
+        "given": "a machine reports a critical fault or is manually flagged for maintenance",
+        "when": "the system processes this event",
+        "then": "the machine's status is recorded as 'out of order'."
+      }
+    ],
+    "depends_on": [
+      "REQ-009"
+    ],
+    "affected_by": [
+      "OQ-007",
+      "OQ-006"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-009",
+    "type": "constraint",
+    "statement": "The system's IoT controllers shall use the MQTT protocol to communicate status updates to the backend.",
+    "rationale": "Defines the specific technology to be used for IoT communication, as determined by the technical team.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "They'll push status over MQTT every ten seconds."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "the IoT boards publish to an MQTT broker."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-010",
+    "type": "non_functional",
+    "statement": "IoT controllers shall publish a status update at least every 10 seconds.",
+    "rationale": "Ensures that the system has a reasonably fresh view of the machine state for real-time dashboards and applications.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "They'll push status over MQTT every ten seconds."
+      }
+    ],
+    "metric": {
+      "dimension": "update_frequency",
+      "target": "<= 10s",
+      "condition": "During normal operation."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-011",
+    "type": "constraint",
+    "statement": "The system shall use Stripe Connect for payment processing to handle fund settlement to individual laundromat owners.",
+    "rationale": "Specifies the third-party payment provider and platform (Stripe Connect) to ensure correct routing of funds and simplify PCI compliance.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "For payments we plan to integrate Stripe Connect so each laundromat location is a connected account and funds settle directly to the owner."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-012",
+    "type": "functional",
+    "statement": "The system shall provide a Progressive Web App (PWA) to allow customers to use the service without installing a native mobile application.",
+    "rationale": "Lowers the barrier to entry for new or infrequent customers who may not want to install a full application.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "They open the SpinCycle app \u2014 or a progressive web app if they don't want to install anything."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Scanning it opens the PWA, which handles one-time guest checkout."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-012-a",
+        "given": "a user scans a machine's QR code without the native app installed",
+        "when": "they are redirected to the PWA in their mobile browser",
+        "then": "they can complete a payment and start a machine cycle as a guest."
+      }
+    ],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-013",
+    "type": "functional",
+    "statement": "The customer application shall display a visual map of the laundromat, color-coding machines by status: green for available, yellow for in-use, and red for out-of-order.",
+    "rationale": "Provides customers with an at-a-glance view of machine availability, improving their experience and reducing time spent searching for a free machine.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "They see a map of the location showing which machines are available in green, in-use in yellow, and out-of-order in red."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-013-a",
+        "given": "a customer is viewing the laundromat map",
+        "when": "a machine has a status of 'idle'",
+        "then": "it is displayed with a green color indicator."
+      },
+      {
+        "id": "AC-013-b",
+        "given": "a customer is viewing the laundromat map",
+        "when": "a machine has a status of 'running'",
+        "then": "it is displayed with a yellow color indicator."
+      },
+      {
+        "id": "AC-013-c",
+        "given": "a customer is viewing the laundromat map",
+        "when": "a machine has a status of 'out of order'",
+        "then": "it is displayed with a red color indicator."
+      }
+    ],
+    "depends_on": [
+      "REQ-008"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-014",
+    "type": "non_functional",
+    "statement": "The system shall physically start a machine's cycle within 5 seconds of a successful payment confirmation.",
+    "rationale": "Ensures a responsive and satisfactory user experience, giving the customer immediate feedback that their payment was successful.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "The machine starts within five seconds of payment confirmation."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "Payment confirmation to machine start within five seconds \u2014 that's end to end including Stripe's authorization round trip."
+      }
+    ],
+    "metric": {
+      "dimension": "end-to-end_latency",
+      "target": "< 5s",
+      "condition": "From successful payment API response to machine start command being sent."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-002"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-015",
+    "type": "functional",
+    "statement": "The system shall allow customers to complete a transaction as a guest without creating an account.",
+    "rationale": "Reduces friction for first-time or infrequent users.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Scanning it opens the PWA, which handles one-time guest checkout."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "No account required."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-015-a",
+        "given": "a new customer has selected a machine and cycle",
+        "when": "they proceed to payment",
+        "then": "they are able to complete the transaction by providing only payment details, without being forced to create a password or user profile."
+      }
+    ],
+    "depends_on": [
+      "REQ-002"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-016",
+    "type": "functional",
+    "statement": "The system shall provide an optional customer account that allows access to features like loyalty points.",
+    "rationale": "Encourages customer retention and provides a foundation for personalized features.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "if they do create an account they can earn loyalty points."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-016-a",
+        "given": "a customer is using the application",
+        "when": "they choose to sign up for an account",
+        "then": "they can create a persistent profile to track their history and loyalty status."
+      }
+    ],
+    "depends_on": [
+      "REQ-031",
+      "REQ-032",
+      "REQ-033"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-017",
+    "type": "functional",
+    "statement": "The system shall implement a loyalty program for registered customers.",
+    "rationale": "Incentivizes repeat business and increases customer lifetime value.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "if they do create an account they can earn loyalty points."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-017-a",
+        "given": "a registered customer completes a paid transaction",
+        "when": "the payment is successfully processed",
+        "then": "the corresponding number of loyalty points are added to their account."
+      },
+      {
+        "id": "AC-017-b",
+        "given": "a registered customer has accumulated enough points for a reward",
+        "when": "they choose to redeem the reward on a qualifying transaction",
+        "then": "the reward is applied and their point balance is debited accordingly."
+      }
+    ],
+    "depends_on": [
+      "REQ-016"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-018",
+    "type": "business_rule",
+    "statement": "Registered customers shall earn one loyalty point for every full dollar spent (e.g., a $3.50 purchase earns 3 points), and can redeem 100 points for a free standard wash.",
+    "rationale": "Defines the specific earn and burn rates for the loyalty program, clarifying that points are awarded by flooring the dollar amount of the transaction.",
+    "status": "assumed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Simple tier system. Every dollar spent earns one point."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "At a hundred points you get a free standard wash \u2014 roughly a ten-percent rebate."
+      },
+      {
+        "origin": "analyst_inference",
+        "ref": null,
+        "excerpt": "Assumed that points are awarded only for whole dollars spent (i.e., a $3.50 purchase earns 3 points) to resolve ambiguity in the transcript."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-017"
+    ],
+    "affected_by": [],
+    "revision": 3
+  },
+  {
+    "id": "REQ-019",
+    "type": "functional",
+    "statement": "The system shall offer a monthly subscription plan ('Spin Pass') for customers.",
+    "rationale": "Creates a predictable, recurring revenue stream for laundromat owners and offers value to frequent customers.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "We want a \"Spin Pass\" monthly subscription option too: twenty-five dollars a month for unlimited standard washes at a single location."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "I love the subscription idea."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-019-a",
+        "given": "a registered customer is not a subscriber",
+        "when": "they navigate to the subscription section and complete the sign-up process",
+        "then": "their account is marked as an active 'Spin Pass' subscriber and they are billed the monthly fee."
+      },
+      {
+        "id": "AC-019-b",
+        "given": "an active 'Spin Pass' subscriber selects a standard wash",
+        "when": "they proceed to checkout",
+        "then": "the price is displayed as $0 and they can start the machine without a new charge."
+      }
+    ],
+    "depends_on": [
+      "REQ-016"
+    ],
+    "affected_by": [
+      "OQ-013"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-020",
+    "type": "business_rule",
+    "statement": "The 'Spin Pass' subscription shall provide unlimited standard washes at a single, designated location for a monthly fee of $25.",
+    "rationale": "Defines the specific terms, benefits, and price of the subscription plan.",
+    "status": "open",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "twenty-five dollars a month for unlimited standard washes at a single location."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-019"
+    ],
+    "affected_by": [
+      "OQ-013"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-021",
+    "type": "business_rule",
+    "statement": "'Spin Pass' subscribers shall receive a 50% discount on premium cycle types.",
+    "rationale": "Adds value to the subscription and encourages upselling to higher-margin cycles.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Premium cycles like sanitize or extra-large would be discounted fifty percent for subscribers."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-019"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-022",
+    "type": "functional",
+    "statement": "The system shall send a reminder notification to a customer if their completed laundry has not been collected within 5 minutes of the cycle finishing.",
+    "rationale": "Helps improve machine turnover by gently nudging customers to retrieve their items, benefiting other waiting customers.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "Five minutes after a cycle ends, if the door hasn't been opened, send the customer a reminder."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "The IoT board can detect door-open events, so we'll know when someone actually unloads."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-022-a",
+        "given": "a customer's laundry cycle has been complete for 5 minutes",
+        "when": "the system has not detected a 'door-open' event for that machine",
+        "then": "a reminder push notification is sent to the customer."
+      },
+      {
+        "id": "AC-022-b",
+        "given": "a customer's laundry cycle has been complete for 4 minutes",
+        "when": "the customer opens the machine door",
+        "then": "no reminder notification is sent."
+      }
+    ],
+    "depends_on": [
+      "REQ-003"
+    ],
+    "affected_by": [
+      "OQ-004"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-023",
+    "type": "functional",
+    "statement": "The system shall support applying an idle fee for laundry not collected after a pre-defined duration has passed since the cycle's completion.",
+    "rationale": "Strongly incentivizes customers to free up machines, maximizing throughput for the laundromat owner.",
+    "status": "confirmed",
+    "priority": "could",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "After fifteen minutes, start a small idle fee \u2014 maybe twenty-five cents per minute \u2014 so people have an incentive to come get their stuff."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-023-a",
+        "given": "the idle fee feature is enabled for a location and set to a 15-minute grace period",
+        "when": "a machine has been idle with a completed cycle for 15 minutes and 1 second without the door being opened",
+        "then": "the system begins to accrue an idle fee on the customer's account."
+      },
+      {
+        "id": "AC-023-b",
+        "given": "an idle fee is accruing for a customer",
+        "when": "the customer opens the machine door",
+        "then": "the system stops accruing the fee and finalizes the total charge."
+      },
+      {
+        "id": "AC-023-c",
+        "given": "an idle fee is accruing at $0.25/min",
+        "when": "the customer opens the machine door after 16 minutes and 30 seconds have passed since the cycle completed (1.5 fee-eligible minutes)",
+        "then": "the system finalizes the total charge for 2 full minutes of idle time, for a total of $0.50."
+      }
+    ],
+    "depends_on": [
+      "REQ-022"
+    ],
+    "affected_by": [
+      "OQ-014"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-024",
+    "type": "business_rule",
+    "statement": "Idle fees shall be billed in full-minute increments, where any partial minute incurs the full per-minute charge (e.g., 90 seconds of idle time is billed as 2 minutes). The rate shall be configurable by the owner, with a suggested default of $0.25 per minute.",
+    "rationale": "Defines the billing logic and default rate for the idle fee feature, ensuring transparency for the customer.",
+    "status": "confirmed",
+    "priority": "could",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "maybe twenty-five cents per minute"
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "We should probably bill in full-minute increments and clearly disclose that."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-023"
+    ],
+    "affected_by": [
+      "OQ-014"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-025",
+    "type": "functional",
+    "statement": "The idle fee feature shall be configurable (enabled/disabled) on a per-location basis by the laundromat owner.",
+    "rationale": "Provides flexibility for owners who may want different policies for different locations or may wish to opt out of this feature entirely.",
+    "status": "confirmed",
+    "priority": "could",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "I'd say we build the notifications and the idle-fee logic but keep the fee togglable per location."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-025-a",
+        "given": "an owner is viewing the settings for one of their locations in the dashboard",
+        "when": "they toggle the 'Enable Idle Fee' setting to OFF",
+        "then": "customers at that location will no longer accrue idle fees."
+      }
+    ],
+    "depends_on": [
+      "REQ-023"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-026",
+    "type": "functional",
+    "statement": "The owner dashboard shall include a maintenance log for each machine.",
+    "rationale": "Allows technicians to track repair history, record notes, and manage the status of machines under repair.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "And a maintenance log where my technician can mark a machine as \"under repair\" and add notes."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-026-a",
+        "given": "an authorized staff member is viewing a machine's details in the dashboard",
+        "when": "they add a new log entry with notes and set the status to 'under repair'",
+        "then": "the machine's status is updated to 'out of order' and the entry is saved in the machine's history."
+      }
+    ],
+    "depends_on": [
+      "REQ-004"
+    ],
+    "affected_by": [
+      "OQ-001"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-027",
+    "type": "functional",
+    "statement": "The system shall implement role-based access control (RBAC) for the owner dashboard to restrict access to data and functionality based on user role.",
+    "rationale": "Ensures that staff members only have access to the information and tools necessary for their jobs, protecting sensitive financial data.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "Each location has its own staff, so role-based access is important"
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "my floor attendants should see machine status but not revenue numbers."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-027-a",
+        "given": "a user with the 'Attendant' role is logged in",
+        "when": "they attempt to access the revenue analytics page",
+        "then": "access is denied."
+      },
+      {
+        "id": "AC-027-b",
+        "given": "a user with the 'Owner' role is logged in",
+        "when": "they access the revenue analytics page",
+        "then": "the page is displayed with all data."
+      }
+    ],
+    "depends_on": [
+      "REQ-004"
+    ],
+    "affected_by": [
+      "OQ-001",
+      "OQ-003"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-028",
+    "type": "business_rule",
+    "statement": "The 'Owner' role shall have full access to all data and functionality for all locations associated with their account, including aggregate views.",
+    "rationale": "Defines the permissions for the top-level user role.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Owner sees everything."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "I need to switch between them or see an aggregate view."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-027"
+    ],
+    "affected_by": [
+      "OQ-011"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-029",
+    "type": "business_rule",
+    "statement": "The 'Manager' role shall have full access to all data and functionality, but only for their specifically assigned location(s).",
+    "rationale": "Defines the permissions for a location-specific management role.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Manager sees everything for their assigned location."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-027"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-030",
+    "type": "business_rule",
+    "statement": "The 'Attendant' role shall be able to view machine status and change a machine's status to 'out of order' by creating a maintenance log entry, but shall have no access to financial data.",
+    "rationale": "Defines the permissions for a limited, operational-focused role, empowering floor staff to immediately prevent customers from using a broken machine.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Attendant sees machine status and can flag maintenance issues but no financial data."
+      },
+      {
+        "origin": "client_proxy",
+        "ref": "REQ-030 Objection",
+        "excerpt": "My floor staff needs the ability to put a machine into an 'out of order' state themselves to prevent customers from using a broken machine."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-027"
+    ],
+    "affected_by": [],
+    "revision": 2
+  },
+  {
+    "id": "REQ-031",
+    "type": "functional",
+    "statement": "The system shall allow customers to register and authenticate using an email address and password.",
+    "rationale": "Provides a traditional, standard method for account creation and login.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "For customers, email plus password or social login \u2014 Google and Apple."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-031-a",
+        "given": "a new user provides a valid email and password",
+        "when": "they submit the registration form",
+        "then": "an account is created and they are logged in."
+      }
+    ],
+    "depends_on": [
+      "REQ-016"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-032",
+    "type": "functional",
+    "statement": "The system shall allow customers to register and authenticate using their Google account (social login).",
+    "rationale": "Offers a convenient, low-friction authentication method for a large segment of users.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "For customers, email plus password or social login \u2014 Google and Apple."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-032-a",
+        "given": "a new user is on the login screen",
+        "when": "they click 'Sign in with Google' and successfully authenticate with Google",
+        "then": "a SpinCycle account is created for them and they are logged into the application."
+      }
+    ],
+    "depends_on": [
+      "REQ-016"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-033",
+    "type": "functional",
+    "statement": "The system shall allow customers to register and authenticate using their Apple ID (social login).",
+    "rationale": "Offers a convenient, low-friction, and privacy-focused authentication method for users in the Apple ecosystem.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "For customers, email plus password or social login \u2014 Google and Apple."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-033-a",
+        "given": "a new user is on the login screen on an Apple device",
+        "when": "they tap 'Sign in with Apple' and successfully authenticate with Apple",
+        "then": "a SpinCycle account is created for them and they are logged into the application."
+      }
+    ],
+    "depends_on": [
+      "REQ-016"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-034",
+    "type": "functional",
+    "statement": "The system shall enforce Time-based One-Time Password (TOTP) two-factor authentication (2FA) for all owner dashboard users.",
+    "rationale": "Enhances the security of owner and staff accounts, which have access to sensitive financial and operational data.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "For the owner dashboard we want to enforce two-factor authentication, probably TOTP-based."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-034-a",
+        "given": "a dashboard user has entered their correct username and password",
+        "when": "they are prompted for a 2FA code",
+        "then": "they must enter a valid code from their TOTP authenticator app to complete the login."
+      }
+    ],
+    "depends_on": [
+      "REQ-004"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-035",
+    "type": "business_rule",
+    "statement": "The platform shall collect a 7% service fee from each transaction, with the remainder settling to the laundromat owner's connected account.",
+    "rationale": "Defines the core business model for the SpinCycle platform.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "The platform takes a seven-percent service fee off each transaction, and the remainder settles to the laundromat's connected Stripe account."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-002",
+      "REQ-011"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-036",
+    "type": "business_rule",
+    "statement": "Payouts of collected funds to laundromat owners shall occur on a two-day rolling basis.",
+    "rationale": "Sets the expectation for how quickly owners will receive their revenue.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "Payouts happen on a two-day rolling basis."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-011"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-037",
+    "type": "functional",
+    "statement": "The system shall allow customers to request a refund for a transaction through the application.",
+    "rationale": "Provides a self-service method for customers to report issues like machine malfunctions and initiate a resolution process.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "If a machine malfunctions mid-cycle, the customer should be able to request a refund from the app."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-037-a",
+        "given": "a customer is viewing their transaction history",
+        "when": "they select a transaction and tap the 'Request Refund' option",
+        "then": "a refund request is created and placed in a 'pending' state for manager review."
+      }
+    ],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-038",
+    "type": "functional",
+    "statement": "The owner dashboard shall allow authorized users (Manager or Owner) to approve or deny pending refund requests.",
+    "rationale": "Gives owners control over the refund process, allowing them to validate requests before funds are returned.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "It goes into a pending state, the location manager approves or denies, and then we process it through Stripe."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-038-a",
+        "given": "a manager is viewing a pending refund request",
+        "when": "they click 'Approve'",
+        "then": "the refund is processed via the payment gateway and the request status is updated to 'Approved'."
+      },
+      {
+        "id": "AC-038-b",
+        "given": "a manager is viewing a pending refund request",
+        "when": "they click 'Deny'",
+        "then": "the request status is updated to 'Denied' and no refund is issued."
+      }
+    ],
+    "depends_on": [
+      "REQ-037",
+      "REQ-027"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-039",
+    "type": "non_functional",
+    "statement": "The IoT controllers must be able to buffer at least 4 hours of status events to handle network connectivity outages.",
+    "rationale": "Ensures data integrity and accurate reporting by preventing data loss during temporary internet disruptions at the laundromat.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "The boards have a small flash buffer \u2014 about four hours of events."
+      }
+    ],
+    "metric": {
+      "dimension": "offline_resilience",
+      "target": ">= 4 hours",
+      "condition": "Buffering of machine status events during network outage."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-040",
+    "type": "functional",
+    "statement": "The system shall allow customers to start machines during an internet outage.",
+    "rationale": "Provides maximum uptime and business continuity for the laundromat owner.",
+    "status": "deprecated",
+    "priority": "wont",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "offline machine start is a post-launch feature."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [
+      "OQ-017"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-041",
+    "type": "non_functional",
+    "statement": "The customer-facing application (native and PWA) shall be compliant with Web Content Accessibility Guidelines (WCAG) 2.1 Level AA.",
+    "rationale": "Ensures the application is usable by people with a wide range of disabilities, including visual and motor impairments.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "The app needs to meet WCAG 2.1 AA."
+      }
+    ],
+    "metric": {
+      "dimension": "accessibility",
+      "target": "WCAG 2.1 AA",
+      "condition": ""
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-042",
+    "type": "functional",
+    "statement": "The customer-facing application shall support English and Spanish languages.",
+    "rationale": "Serves a broader customer base in diverse neighborhoods.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "We serve diverse neighborhoods \u2014 English and Spanish at launch, with a localization framework so adding languages later is just a translation file."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-042-a",
+        "given": "a user's device is set to Spanish",
+        "when": "they open the SpinCycle application",
+        "then": "all UI text is displayed in Spanish."
+      },
+      {
+        "id": "AC-042-b",
+        "given": "a user's device is set to English",
+        "when": "they open the SpinCycle application",
+        "then": "all UI text is displayed in English."
+      }
+    ],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-043",
+    "type": "non_functional",
+    "statement": "Machine status changes must be reflected in the customer and owner applications within 2 seconds of the corresponding event being published by the IoT device.",
+    "rationale": "Ensures that the information presented to users is timely and accurate, fostering trust in the system.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "Machine status updates should reflect in the app within two seconds of the MQTT event."
+      }
+    ],
+    "metric": {
+      "dimension": "data_freshness_latency",
+      "target": "< 2s",
+      "condition": "p95 of all status updates from MQTT publish to client UI render."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-044",
+    "type": "non_functional",
+    "statement": "The owner dashboard shall achieve initial data load in under 3 seconds.",
+    "rationale": "Provides a responsive and efficient user experience for owners managing their business.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "The dashboard should load initial data in under three seconds on a standard broadband connection."
+      }
+    ],
+    "metric": {
+      "dimension": "load_time",
+      "target": "< 3s",
+      "condition": "On a standard broadband connection (e.g., 25 Mbps)."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-045",
+    "type": "non_functional",
+    "statement": "The public-facing APIs shall achieve a monthly uptime of at least 99.9%.",
+    "rationale": "Ensures high availability and reliability for the service, which is critical for both customer-facing operations and payment processing.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "We're targeting ninety-nine-point-nine percent uptime for the API."
+      }
+    ],
+    "metric": {
+      "dimension": "availability",
+      "target": ">= 99.9%",
+      "condition": "Measured monthly."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-046",
+    "type": "functional",
+    "statement": "The system shall allow customers to join a virtual waitlist for a specific type of machine (e.g., front-load washer) when none are available.",
+    "rationale": "Improves customer experience during peak hours by allowing them to queue without physically waiting in the laundromat.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "\"Machine available\" \u2014 if all machines are busy, a customer can join a virtual waitlist and get notified when one frees up."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "The waitlist thing would be great."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-046-a",
+        "given": "all machines of a certain type are currently in use",
+        "when": "a customer selects that machine type and taps 'Notify me'",
+        "then": "they are added to the end of the virtual waitlist for that machine type."
+      },
+      {
+        "id": "AC-046-b",
+        "given": "a machine becomes available and its waitlist is processed",
+        "when": "the last notified user's 5-minute claim window expires without them starting a cycle",
+        "then": "the machine's status becomes generally available to all customers on the map."
+      }
+    ],
+    "depends_on": [
+      "REQ-008"
+    ],
+    "affected_by": [],
+    "revision": 2
+  },
+  {
+    "id": "REQ-047",
+    "type": "functional",
+    "statement": "The system shall notify the first customer in a waitlist queue via push notification when a matching machine becomes available.",
+    "rationale": "Closes the loop on the waitlist feature, making it useful for the customer.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "When any front-load washer at that location becomes idle, the first person in the queue gets a push notification..."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-047-a",
+        "given": "a customer is first in the waitlist for a front-load washer",
+        "when": "a front-load washer's status changes to 'idle'",
+        "then": "that customer receives a push notification and their claim timer begins."
+      }
+    ],
+    "depends_on": [
+      "REQ-046"
+    ],
+    "affected_by": [
+      "OQ-004",
+      "OQ-010"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-048",
+    "type": "business_rule",
+    "statement": "A customer notified from the waitlist shall have 5 minutes to start a cycle on an available machine. If they do not claim a machine in time, their spot is forfeited and the next person in the queue is notified. If there are no more users in the queue, the machine becomes generally available.",
+    "rationale": "Ensures the waitlist moves efficiently and doesn't leave machines idle for extended periods.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "...and has five minutes to start a cycle. If they don't, it moves to the next person."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-047"
+    ],
+    "affected_by": [],
+    "revision": 2
+  },
+  {
+    "id": "REQ-049",
+    "type": "business_rule",
+    "statement": "All financial transaction data must be retained for a minimum of 7 years.",
+    "rationale": "Complies with standard financial and tax auditing requirements.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Transaction data kept for seven years for tax purposes."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-050",
+    "type": "business_rule",
+    "statement": "Raw machine telemetry event data shall be purged after 90 days, but daily aggregated telemetry data shall be retained indefinitely.",
+    "rationale": "Manages data storage costs by retaining only valuable long-term data while discarding granular, short-term data.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Machine telemetry \u2014 raw events can be purged after ninety days, but daily aggregates kept indefinitely for trend analysis."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-051",
+    "type": "constraint",
+    "statement": "All network traffic between clients (app, dashboard, IoT) and backend servers must be encrypted using TLS 1.3.",
+    "rationale": "Ensures data is secure in transit, protecting against eavesdropping and man-in-the-middle attacks.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "All traffic TLS 1.3."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-052",
+    "type": "constraint",
+    "statement": "Personally Identifiable Information (PII) must be encrypted at rest using AES-256.",
+    "rationale": "Protects sensitive customer data stored in the database from unauthorized access.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "PII encrypted at rest \u2014 AES-256."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-053",
+    "type": "functional",
+    "statement": "The system shall allow authorized users to reserve a group of specific machines for a defined time window in a single operation.",
+    "rationale": "Accommodates corporate or high-value clients who require guaranteed availability for multiple machines at specific times, streamlining the booking process for staff.",
+    "status": "assumed",
+    "priority": "could",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "They'd love to reserve three washers from six to eight AM."
+      },
+      {
+        "origin": "client_proxy",
+        "ref": "REQ-053 Objection",
+        "excerpt": "I said I need to 'reserve three washers from six to eight AM' for my corporate clients, implying a single action for a group of machines."
+      },
+      {
+        "origin": "analyst_inference",
+        "ref": "deferred_oq_OQ-019",
+        "excerpt": "Resolve the critic issue by adopting the current implementation draft for REQ-053."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-053-a",
+        "given": "a laundromat manager is logged into the dashboard",
+        "when": "they select three specific washers, a date, and a time window from 6 AM to 8 AM and create a group reservation",
+        "then": "the system records the reservation for all three selected machines."
+      }
+    ],
+    "depends_on": [
+      "REQ-004"
+    ],
+    "affected_by": [
+      "OQ-019",
+      "OQ-002"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-054",
+    "type": "functional",
+    "statement": "Reserved machines shall be blocked from general availability in the customer application during their reservation window.",
+    "rationale": "Ensures that reservations are honored and reserved machines are not used by other customers.",
+    "status": "confirmed",
+    "priority": "could",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "It should block those machines from general availability during that window."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-054-a",
+        "given": "a machine is reserved from 6 AM to 8 AM",
+        "when": "a general customer views the machine map at 7 AM",
+        "then": "the reserved machine is shown as unavailable (e.g., greyed out or with a 'Reserved' status)."
+      }
+    ],
+    "depends_on": [
+      "REQ-053"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-055",
+    "type": "business_rule",
+    "statement": "A 50% cancellation fee shall be charged if a machine reservation is cancelled less than two hours before its scheduled start time, based on a yet-to-be-defined reservation cost.",
+    "rationale": "Compensates the owner for lost revenue opportunity from late cancellations. The basis for calculating the fee (e.g., estimated cycle costs, flat fee) is not yet defined.",
+    "status": "assumed",
+    "priority": "could",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Reservations with a configurable cancellation policy \u2014 cancel up to two hours before the window, otherwise you're charged fifty percent."
+      },
+      {
+        "origin": "analyst_inference",
+        "ref": "deferred_oq_OQ-020",
+        "excerpt": "Resolve the critic issue by adopting the current implementation draft for REQ-055."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-053"
+    ],
+    "affected_by": [
+      "OQ-020"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-056",
+    "type": "functional",
+    "statement": "The owner dashboard shall provide a revenue analytics page with visualizations.",
+    "rationale": "Allows owners to understand business trends and performance at a deeper level than simple reports.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "We also want a revenue analytics page: revenue per machine, per cycle type, peak hours heatmap, and average turnaround time."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-056-a",
+        "given": "an owner is viewing the revenue analytics page",
+        "when": "they select the 'Peak Hours Heatmap' view",
+        "then": "a visual chart is displayed showing the busiest days and times for their location."
+      },
+      {
+        "id": "AC-056-b",
+        "given": "an owner is viewing the revenue analytics page",
+        "when": "they select the 'Revenue by Machine' view",
+        "then": "a report or chart is displayed showing the total revenue generated by each individual machine over the selected time period."
+      },
+      {
+        "id": "AC-056-c",
+        "given": "an owner is viewing the revenue analytics page",
+        "when": "they select the 'Revenue by Cycle Type' view",
+        "then": "a report or chart is displayed showing the total revenue generated by each cycle type over the selected time period."
+      },
+      {
+        "id": "AC-056-d",
+        "given": "an owner is viewing the revenue analytics page",
+        "when": "they view the summary metrics",
+        "then": "the average machine turnaround time for the selected period is displayed."
+      }
+    ],
+    "depends_on": [
+      "REQ-006"
+    ],
+    "affected_by": [
+      "OQ-015"
+    ],
+    "revision": 2
+  },
+  {
+    "id": "REQ-057",
+    "type": "functional",
+    "statement": "The system shall allow owners to export revenue and transaction data to a CSV file.",
+    "rationale": "Facilitates offline analysis and integration with external accounting software.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Exportable to CSV for their accountants."
+      },
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, DANA",
+        "excerpt": "I need daily transaction reports for my bookkeeper."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-057-a",
+        "given": "an owner is viewing a revenue report",
+        "when": "they click the 'Export to CSV' button",
+        "then": "a CSV file containing the data from the current report view is downloaded to their computer."
+      }
+    ],
+    "depends_on": [
+      "REQ-006"
+    ],
+    "affected_by": [
+      "OQ-012",
+      "OQ-003"
+    ],
+    "revision": 1
+  },
+  {
+    "id": "REQ-058",
+    "type": "non_functional",
+    "statement": "The customer API must be rate-limited to 100 requests per minute per user.",
+    "rationale": "Prevents system abuse and ensures fair resource allocation among users.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "API rate limiting to prevent abuse: a hundred requests per minute per user for the customer API, higher limits for dashboard users."
+      }
+    ],
+    "metric": {
+      "dimension": "rate_limit",
+      "target": "<= 100 requests/minute",
+      "condition": "Per authenticated customer user."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-059",
+    "type": "functional",
+    "statement": "The system shall allow administrators to define different laundry cycle types (e.g., Normal, Delicate, Heavy-Duty) with associated prices and durations.",
+    "rationale": "This is a necessary prerequisite for allowing customers to choose a cycle and be charged correctly.",
+    "status": "assumed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "analyst_inference",
+        "ref": null,
+        "excerpt": "Inferred from the statement: 'They tap an available machine, pick a wash cycle \u2014 normal, delicate, heavy-duty \u2014 and confirm payment.'"
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-060",
+    "type": "functional",
+    "statement": "The system shall allow a laundromat owner to send promotional notifications to registered customers of a specific location.",
+    "rationale": "Enables owners to run marketing campaigns and drive traffic during off-peak hours, increasing revenue.",
+    "status": "confirmed",
+    "priority": "should",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "Promotional notifications \u2014 the owner can push a deal like \"free dry with every wash this Thursday.\""
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-060-a",
+        "given": "an owner is logged into the dashboard",
+        "when": "they compose a promotional message and send it to a specific location's customers",
+        "then": "registered customers who have opted into notifications for that location receive the promotional push notification."
+      }
+    ],
+    "depends_on": [
+      "REQ-004",
+      "REQ-016"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-061",
+    "type": "functional",
+    "statement": "The system shall generate a maintenance alert visible within the owner dashboard when a machine reports a fault.",
+    "rationale": "Ensures maintenance issues are addressed promptly by notifying staff via the primary management tool, reducing machine downtime.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, MARCUS",
+        "excerpt": "And maintenance alerts to staff when a machine reports a fault code."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [
+      {
+        "id": "AC-061-a",
+        "given": "a machine's IoT controller publishes a fault code",
+        "when": "the system processes the event",
+        "then": "a maintenance alert is generated and associated with the machine and its location."
+      },
+      {
+        "id": "AC-061-b",
+        "given": "an authorized staff member is logged into the dashboard for a specific location",
+        "when": "a machine at their location reports a fault",
+        "then": "a persistent, visible alert appears in the dashboard UI until it is acknowledged."
+      }
+    ],
+    "depends_on": [
+      "REQ-008",
+      "REQ-027"
+    ],
+    "affected_by": [],
+    "revision": 3
+  },
+  {
+    "id": "REQ-062",
+    "type": "constraint",
+    "statement": "The system backend shall maintain a local payment ledger to ensure the owner dashboard can display revenue data independently of the payment processor's API latency.",
+    "rationale": "Guarantees a responsive and available revenue dashboard for owners, even if the primary payment provider's reporting API is slow or temporarily unavailable.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "We'll store a payment ledger locally so the dashboard can show revenue even if Stripe's reporting API is slow."
+      }
+    ],
+    "metric": null,
+    "acceptance_criteria": [],
+    "depends_on": [
+      "REQ-006"
+    ],
+    "affected_by": [],
+    "revision": 1
+  },
+  {
+    "id": "REQ-063",
+    "type": "non_functional",
+    "statement": "The system API must support at least 500 concurrent users per location without performance degradation.",
+    "rationale": "Ensures the system remains stable and responsive during peak usage times at busy laundromat locations.",
+    "status": "confirmed",
+    "priority": "must",
+    "source": [
+      {
+        "origin": "transcript",
+        "ref": "SpinCycle Transcript, PRIYA",
+        "excerpt": "Load testing to verify the API handles at least five hundred concurrent users per location without degradation."
+      }
+    ],
+    "metric": {
+      "dimension": "concurrency_support",
+      "target": ">= 500 users/location",
+      "condition": "While maintaining API response times under defined thresholds (e.g., p95 < 500ms)."
+    },
+    "acceptance_criteria": [],
+    "depends_on": [],
+    "affected_by": [],
+    "revision": 1
+  }
+]

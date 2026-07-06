@@ -1,0 +1,290 @@
+[
+  {
+    "id": "OQ-001",
+    "question": "How is the 'Maintenance Technician' role handled? The transcript mentions a technician using a maintenance log, but the defined RBAC roles are only Owner, Manager, and Attendant. Is this a distinct user role with its own login, or a function performed by a user with an 'Attendant' or 'Manager' role?",
+    "synthetic_origin": "analyst_inference",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-026",
+      "REQ-027"
+    ],
+    "proposed_assumption": "For the initial implementation, the 'Manager' and 'Attendant' roles will have the necessary permissions to update maintenance logs. A dedicated 'Technician' role is not required.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-002",
+    "question": "How do 'corporate clients' interact with the reservation system? Do they have a special login to create or manage their own recurring reservations, or must they always go through a Manager/Owner to book machines?",
+    "synthetic_origin": "analyst_inference",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-053"
+    ],
+    "proposed_assumption": "Reservations can only be created by users with 'Manager' or 'Owner' permissions via the owner dashboard. There is no external-facing portal for corporate clients in the initial release.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-003",
+    "question": "Is the 'bookkeeper' a direct user of the system? Dana mentions needing reports for her bookkeeper. Should there be a read-only role with access to financial reports, or is the intended workflow for the Owner to export the CSV and send it to them externally?",
+    "synthetic_origin": "analyst_inference",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-057",
+      "REQ-027"
+    ],
+    "proposed_assumption": "The bookkeeper is not a direct user of the system. The workflow is for the Owner/Manager to export the required CSV reports and provide them to the bookkeeper. A dedicated 'Bookkeeper' role is out of scope.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-004",
+    "question": "How do guest users (using the PWA without an account) receive critical time-sensitive notifications like 'cycle complete', 'unattended laundry reminder', or 'waitlist available'? Push notifications typically require app installation and permissions.",
+    "synthetic_origin": "analyst_inference",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-003",
+      "REQ-022",
+      "REQ-047"
+    ],
+    "proposed_assumption": "For the initial release, guest users will not receive push notifications. They will see the cycle timer within the PWA after payment. Notifications are a value-add feature that encourages account creation and native app installation.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-005",
+    "question": "What specific data fields need to be captured for each activity type (call, email, meeting)? Are these structured fields (e.g., call duration, outcome) or a single free-text 'notes' field?",
+    "synthetic_origin": "analyst_inference",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-006"
+    ],
+    "proposed_assumption": "Initially, all activity types will share a common set of fields: Activity Type, Date/Time, and a multi-line Notes field. No type-specific structured fields will be implemented.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-006",
+    "question": "When a deal is reassigned, what are the expected side effects? Should an automatic notification (e.g., email) be sent to the previous and new owners? Should the reassignment event be logged as a formal entry in the deal's activity history?",
+    "synthetic_origin": "analyst_inference",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-008"
+    ],
+    "proposed_assumption": "Reassignment changes the deal's owner. A system-generated note is automatically added to the deal's activity log (e.g., 'Deal reassigned from Sally to Joe by Mark'). No email or other external notifications will be sent.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-007",
+    "question": "How is a 'team' defined for reporting and permissions? Is it an explicit entity that Admins create and manage, or is it implicitly defined by the user's 'manager' field in their profile?",
+    "synthetic_origin": "analyst_inference",
+    "status": "answered",
+    "blocking": true,
+    "blocking_rationale": "This decision dictates a core part of the data model and authorization logic. An implicit hierarchy is simpler, while explicit teams are more flexible but require more complex management interfaces and data structures.",
+    "affects": [
+      "REQ-005",
+      "REQ-008"
+    ],
+    "proposed_assumption": "A team is defined implicitly. Each user has a single 'manager' field. A manager's team consists of all users who report to them. This hierarchy will be used for all reporting and permissions.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": "A team is implicitly defined by the Location (laundromat site). A Manager is assigned to a Location, and their team consists of all attendants assigned to that same Location."
+  },
+  {
+    "id": "OQ-008",
+    "question": "What is the intended relationship between Contacts and Organizations? Can a Contact exist without being associated with an Organization? Can a Contact be associated with multiple Organizations?",
+    "synthetic_origin": "analyst_inference",
+    "status": "answered",
+    "blocking": true,
+    "blocking_rationale": "This is a fundamental data model question. The answer determines whether the relationship is a simple foreign key (one-to-many) or requires a more complex join table (many-to-many), affecting database schema, APIs, and UI.",
+    "affects": [
+      "REQ-002"
+    ],
+    "proposed_assumption": "The relationship is one-to-many: an Organization can have many Contacts, but a Contact must belong to exactly one Organization. An Organization must be selected or created before a new Contact can be saved.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": ""
+  },
+  {
+    "id": "OQ-009",
+    "question": "I mentioned that my version of the live floor map should have 'more detail' than the customer's. The spec doesn't define what this extra detail is. To really manage my floor without being there, could this map also show me things like the revenue that machine has generated today, or the cycle type that's currently running?",
+    "synthetic_origin": "client_proxy",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-005"
+    ],
+    "proposed_assumption": "For launch, the 'more detail' will be limited to displaying the exact cycle time remaining (not just a yellow indicator) and the cycle type currently running. Revenue-per-machine on the map is a future enhancement.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-010",
+    "question": "I love the waitlist idea because my customers could 'go grab coffee next door,' and I even said they could 'get a text.' A lot of my customers might not install the app or allow push notifications. To make this truly useful, can we notify them by text message (SMS) in addition to the push notification?",
+    "synthetic_origin": "client_proxy",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-047"
+    ],
+    "proposed_assumption": "SMS notifications are out of scope for the initial launch due to the added complexity and cost of a third-party SMS gateway integration. Notifications will be limited to in-app push notifications for registered users.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-011",
+    "question": "The spec says I'll get an 'aggregate view' for my multiple locations, which is great. But what information will be on it? To get a quick overview, I'd need to see a summary of all locations on one screen, like total revenue for the day, and maybe a count of running vs. idle machines at each location. Can we define what this aggregate dashboard will actually show?",
+    "synthetic_origin": "client_proxy",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-028"
+    ],
+    "proposed_assumption": "The initial aggregate view will be a high-level summary dashboard containing a list of all locations. For each location, it will show total revenue for the day and the number of machines in each state (idle, running, out-of-order). Deeper analysis will require clicking into a specific location's dashboard.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-012",
+    "question": "I mentioned needing reports to make tax time easier. The spec calls for exporting CSVs, but the format is what matters. To 'save me hours,' I really need that monthly summary report to automatically calculate and show columns for gross revenue, SpinCycle fees, refunds issued, and the final net amount, broken down by location. Does the plan for the CSV export include this specific, summarized report?",
+    "synthetic_origin": "client_proxy",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-057",
+      "REQ-006"
+    ],
+    "proposed_assumption": "The system will provide a specific 'Monthly Summary' export option that generates a CSV file with the requested columns: Location, Gross Revenue, Platform Fees, Refunds, Net Revenue. A separate 'Transaction Log' export will provide a raw, line-item dump of all transactions.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-013",
+    "question": "Regarding the 'Spin Pass' monthly subscription, what steps will be taken to comply with consumer protection regulations like the Restore Online Shoppers' Confidence Act (ROSCA)?",
+    "synthetic_origin": "research",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-019",
+      "REQ-020"
+    ],
+    "proposed_assumption": "The sign-up flow will include a checkbox for users to explicitly consent to the recurring charge, with a clear summary of the price, billing interval, and a link to the cancellation policy provided directly adjacent to the confirmation button. Cancellation will be accessible through the app's main account screen.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-014",
+    "question": "How will the terms of the optional 'idle fee' (grace period, cost per minute) be presented to the customer to ensure they have clearly accepted the terms before starting a machine?",
+    "synthetic_origin": "research",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-023",
+      "REQ-024"
+    ],
+    "proposed_assumption": "If a location has the idle fee enabled, the payment confirmation screen will display a clear, concise notice, such as: 'A $0.25/min fee may apply if laundry is not collected within 15 minutes of cycle completion.' The user must proceed past this notice to pay.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-015",
+    "question": "A key performance indicator in the vended laundry industry is 'turns per day' (the number of cycles a machine runs daily). Should this metric be added to the owner's dashboard analytics?",
+    "synthetic_origin": "research",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-056"
+    ],
+    "proposed_assumption": "For the initial launch, 'revenue per machine' is a sufficient proxy for performance. Calculating and displaying 'turns per day' can be added as a post-launch enhancement to the analytics dashboard.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-016",
+    "question": "Major competitors like Cents and CleanCloud offer software to manage full-service 'Wash-Dry-Fold' (WDF) and Pickup/Delivery (P&D) services, not just self-service payments. Is there a risk that focusing exclusively on self-service will limit market adoption among owners who offer these other services?",
+    "synthetic_origin": "research",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-004"
+    ],
+    "proposed_assumption": "The initial target market is self-service-only laundromats or owners for whom self-service is the primary business driver. WDF and P&D management are out of scope and represent a known feature gap that can be addressed in future major releases if market feedback demands it.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-017",
+    "question": "Competitor IoT payment systems (e.g., PayRange, Nayax) often highlight offline functionality that allows customers to start machines even when the laundromat's internet is down. Given that SpinCycle has deferred this feature, has the risk of this competitive disadvantage been assessed with pilot partners?",
+    "synthetic_origin": "research",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-040"
+    ],
+    "proposed_assumption": "The MVP will proceed without offline start capability. The pilot partner (Dana) understands that during an internet outage, no new cycles can be started via the app, and this is an acceptable limitation for the initial rollout.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-018",
+    "question": "Some comparable payment systems use Bluetooth for machine activation in addition to QR codes. Should Bluetooth be considered as a fallback or alternative activation method, which could be more reliable in cases of damaged QR codes or poor lighting?",
+    "synthetic_origin": "research",
+    "status": "open",
+    "blocking": false,
+    "blocking_rationale": null,
+    "affects": [
+      "REQ-001"
+    ],
+    "proposed_assumption": "The initial release will rely exclusively on QR codes for machine identification and activation. Bluetooth functionality adds hardware and software complexity that is not justified for the MVP.",
+    "default_if_deferred": "drop_scope",
+    "answer": null
+  },
+  {
+    "id": "OQ-019",
+    "question": "QA Critic Objection: The acceptance criterion (AC-053-a) fails to test the core user need. The stakeholder requested to 'reserve three washers from six to eight AM,' implying a single bulk action. The AC only tests that a reservation is recorded for three machines, but does not validate that it can be accomplished in a 'single operation' as the requirement statement says. A developer could build a UI that passes the test but fails the user by requiring three separate reservation actions. (target: REQ-053)",
+    "synthetic_origin": "reviewer",
+    "status": "deferred",
+    "blocking": true,
+    "blocking_rationale": "QA reviewer flagged blocking defect on REQ-053",
+    "affects": [
+      "REQ-053"
+    ],
+    "proposed_assumption": "Resolve the critic issue by adopting the current implementation draft for REQ-053.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  },
+  {
+    "id": "OQ-020",
+    "question": "QA Critic Objection: The requirement for a 50% cancellation fee is critically ambiguous because it fails to define what the fee is 50% of. There is no concept of a 'reservation price' or 'expected cycle cost' in the domain model or requirements from which to calculate the fee. This business rule cannot be implemented as written. (target: REQ-055)",
+    "synthetic_origin": "reviewer",
+    "status": "deferred",
+    "blocking": true,
+    "blocking_rationale": "QA reviewer flagged blocking defect on REQ-055",
+    "affects": [
+      "REQ-055"
+    ],
+    "proposed_assumption": "Resolve the critic issue by adopting the current implementation draft for REQ-055.",
+    "default_if_deferred": "adopt_assumption",
+    "answer": null
+  }
+]

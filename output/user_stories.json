@@ -1,0 +1,904 @@
+[
+  {
+    "id": "US-001",
+    "epic": "Customer Core Experience",
+    "as_a": "Laundromat Customer",
+    "i_want": "to scan a QR code on a machine and pay for a cycle using my phone",
+    "so_that": "I can start my laundry quickly without needing cash or coins.",
+    "requirement_ids": [
+      "REQ-001",
+      "REQ-002",
+      "REQ-012",
+      "REQ-014",
+      "REQ-015",
+      "REQ-059"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-500-a",
+        "given": "I am a customer at a laundromat and have the SpinCycle app open",
+        "when": "I scan the QR code on an available machine and select a cycle type (e.g., 'Normal Wash')",
+        "then": "I am presented with the payment screen for that cycle."
+      },
+      {
+        "id": "AC-500-b",
+        "given": "I have selected a cycle and am on the payment screen",
+        "when": "I confirm payment with a valid payment method",
+        "then": "the machine physically starts its cycle within 5 seconds of the confirmation."
+      },
+      {
+        "id": "AC-500-c",
+        "given": "I am a new user without the app installed",
+        "when": "I scan a machine's QR code with my phone's camera",
+        "then": "my browser opens the Progressive Web App (PWA) where I can complete the payment as a guest."
+      }
+    ],
+    "edge_cases": [
+      "The QR code is damaged or unreadable.",
+      "The selected machine is in 'out-of-order' or 'running' status.",
+      "The payment method is declined by the payment gateway.",
+      "Network connectivity is lost between payment confirmation and the machine start command."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-002",
+    "epic": "Customer Core Experience",
+    "as_a": "Laundromat Customer",
+    "i_want": "to see a real-time map of the laundromat showing machine availability",
+    "so_that": "I can quickly find an open machine without walking around.",
+    "requirement_ids": [
+      "REQ-013",
+      "REQ-008",
+      "REQ-043"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-501-a",
+        "given": "I have the app open and select a laundromat location",
+        "when": "I view the machine map",
+        "then": "all available machines are shown in green."
+      },
+      {
+        "id": "AC-501-b",
+        "given": "I am viewing the machine map",
+        "when": "a machine is in an active cycle",
+        "then": "it is shown in yellow."
+      },
+      {
+        "id": "AC-501-c",
+        "given": "I am viewing the machine map",
+        "when": "a machine is marked as out of order",
+        "then": "it is shown in red."
+      },
+      {
+        "id": "AC-501-d",
+        "given": "a machine's status changes (e.g., from 'running' to 'idle')",
+        "when": "the IoT device sends an update",
+        "then": "the map in my app reflects this change within 2 seconds."
+      }
+    ],
+    "edge_cases": [
+      "The map layout does not match the physical layout of the laundromat.",
+      "The app fails to receive real-time updates due to poor connectivity on my device."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-003",
+    "epic": "Customer Core Experience",
+    "as_a": "Laundromat Customer",
+    "i_want": "to receive a push notification when my laundry cycle is complete",
+    "so_that": "I can leave the laundromat and return at the right time.",
+    "requirement_ids": [
+      "REQ-003"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-502-a",
+        "given": "I have started a laundry cycle and have notifications enabled",
+        "when": "the machine signals the end of its cycle",
+        "then": "I receive a push notification on my device that says 'Your laundry is done at Machine W-07' (or similar)."
+      }
+    ],
+    "edge_cases": [
+      "I have disabled push notifications for the app.",
+      "The notification is delayed due to mobile network issues.",
+      "I used guest checkout and am not eligible for push notifications."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-004",
+    "epic": "Customer Core Experience",
+    "as_a": "Laundromat Customer",
+    "i_want": "to receive a reminder if I haven't collected my laundry shortly after it's finished",
+    "so_that": "I don't forget it and can free up the machine for others.",
+    "requirement_ids": [
+      "REQ-022"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-503-a",
+        "given": "my laundry cycle finished 5 minutes ago and I have not opened the machine door",
+        "when": "the system checks for unattended laundry",
+        "then": "I receive a reminder push notification."
+      },
+      {
+        "id": "AC-503-b",
+        "given": "my laundry cycle finished 3 minutes ago",
+        "when": "I open the machine door to collect my items",
+        "then": "I do not receive a reminder notification."
+      }
+    ],
+    "edge_cases": [
+      "The machine's door sensor fails to register that the door was opened."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-005",
+    "epic": "User & Access Management",
+    "as_a": "Laundromat Customer",
+    "i_want": "to create an account using my email, Google, or Apple ID",
+    "so_that": "I can access features like loyalty points, subscriptions, and my transaction history.",
+    "requirement_ids": [
+      "REQ-016",
+      "REQ-031",
+      "REQ-032",
+      "REQ-033",
+      "REQ-052"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-504-a",
+        "given": "I am a new user",
+        "when": "I choose to sign up with my email and a password",
+        "then": "a new SpinCycle account is created for me."
+      },
+      {
+        "id": "AC-504-b",
+        "given": "I am a new user",
+        "when": "I choose to sign up with my Google account and complete the Google auth flow",
+        "then": "a new SpinCycle account linked to my Google ID is created."
+      },
+      {
+        "id": "AC-504-c",
+        "given": "I am a new user on an iOS device",
+        "when": "I choose to sign up with my Apple ID and complete the Apple auth flow",
+        "then": "a new SpinCycle account linked to my Apple ID is created."
+      }
+    ],
+    "edge_cases": [
+      "I try to register with an email address that is already in use.",
+      "I cancel the social login process halfway through.",
+      "The social login provider (Google/Apple) is temporarily unavailable."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-006",
+    "epic": "User & Access Management",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to log in to my dashboard using two-factor authentication",
+    "so_that": "my sensitive business and financial data is protected from unauthorized access.",
+    "requirement_ids": [
+      "REQ-004",
+      "REQ-034"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-505-a",
+        "given": "I am a registered dashboard user and have set up 2FA",
+        "when": "I enter my correct email and password on the login page",
+        "then": "I am prompted to enter a 6-digit code from my authenticator app."
+      },
+      {
+        "id": "AC-505-b",
+        "given": "I have been prompted for my 2FA code",
+        "when": "I enter the correct, valid code",
+        "then": "I am successfully logged in and redirected to the dashboard."
+      }
+    ],
+    "edge_cases": [
+      "I enter an incorrect or expired 2FA code.",
+      "I have lost access to my 2FA device and need to use a recovery code.",
+      "The initial setup of 2FA fails."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-007",
+    "epic": "User & Access Management",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to assign roles (Manager, Attendant) to my staff for each location",
+    "so_that": "they can only access the information and tools necessary for their jobs.",
+    "requirement_ids": [
+      "REQ-027",
+      "REQ-028",
+      "REQ-029",
+      "REQ-030"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-506-a",
+        "given": "I am logged in as an 'Owner'",
+        "when": "I assign a staff member the 'Manager' role for 'Location A'",
+        "then": "that user can view all data, including revenue reports, for 'Location A' but not for 'Location B'."
+      },
+      {
+        "id": "AC-506-b",
+        "given": "I am logged in as an 'Owner'",
+        "when": "I assign a staff member the 'Attendant' role for 'Location A'",
+        "then": "that user can view the machine status map but cannot access any revenue or financial pages."
+      },
+      {
+        "id": "AC-506-c",
+        "given": "a user with the 'Attendant' role is logged in",
+        "when": "they attempt to navigate directly to the URL for the revenue dashboard",
+        "then": "they are shown an 'Access Denied' error page."
+      }
+    ],
+    "edge_cases": [
+      "I accidentally assign a user to the wrong location.",
+      "A manager tries to access data from a location they are not assigned to.",
+      "An owner tries to create a custom role (which is not supported)."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-008",
+    "epic": "Owner Dashboard & Reporting",
+    "as_a": "Single-Location Laundromat Manager",
+    "i_want": "to see a live dashboard of all my machines",
+    "so_that": "I can monitor my floor's operational status and machine performance in real-time.",
+    "requirement_ids": [
+      "REQ-005",
+      "REQ-044"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-507-a",
+        "given": "I am logged in and viewing the dashboard",
+        "when": "I look at the list or map of machines",
+        "then": "I can see each machine's current status (idle, running, out of order)."
+      },
+      {
+        "id": "AC-507-b",
+        "given": "a machine is in the 'running' state",
+        "when": "I view its details on the dashboard",
+        "then": "I can see the remaining time in its cycle."
+      },
+      {
+        "id": "AC-507-c",
+        "given": "I have a standard broadband connection",
+        "when": "I navigate to the dashboard page",
+        "then": "the initial data for all my machines loads in under 3 seconds."
+      }
+    ],
+    "edge_cases": [
+      "The dashboard fails to load if one or more IoT devices are offline.",
+      "The displayed 'time remaining' is out of sync with the actual machine."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-009",
+    "epic": "Owner Dashboard & Reporting",
+    "as_a": "Single-Location Laundromat Manager",
+    "i_want": "to view key revenue metrics on my dashboard",
+    "so_that": "I can quickly assess the financial performance of my location.",
+    "requirement_ids": [
+      "REQ-006",
+      "REQ-062"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-508-a",
+        "given": "I am logged into the dashboard with the 'Manager' or 'Owner' role",
+        "when": "I view the main reporting section",
+        "then": "I can see widgets or reports displaying total revenue for today, yesterday, and the same day last week."
+      },
+      {
+        "id": "AC-508-b",
+        "given": "the primary payment provider's API is slow",
+        "when": "I load the revenue dashboard",
+        "then": "the data is still served quickly from the local payment ledger."
+      }
+    ],
+    "edge_cases": [
+      "The definition of 'today' is not clear regarding the location's timezone.",
+      "Revenue data for 'same day last week' is not available for a new location."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-010",
+    "epic": "Owner Dashboard & Reporting",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to access an analytics page with visual reports",
+    "so_that": "I can identify trends like my busiest hours and most profitable machines.",
+    "requirement_ids": [
+      "REQ-056"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-509-a",
+        "given": "I am on the revenue analytics page",
+        "when": "I view the peak hours report",
+        "then": "I see a heatmap showing revenue concentration by day of the week and hour of the day."
+      },
+      {
+        "id": "AC-509-b",
+        "given": "I am on the revenue analytics page",
+        "when": "I select the 'Revenue per Machine' view for the last 30 days",
+        "then": "I see a bar chart ranking each machine by the total revenue it generated."
+      },
+      {
+        "id": "AC-509-c",
+        "given": "I am on the revenue analytics page",
+        "when": "I view the main metrics",
+        "then": "I see the average machine turnaround time for the selected period."
+      }
+    ],
+    "edge_cases": [
+      "The data visualizations are difficult to interpret on a mobile device.",
+      "The date range filtering for analytics is not working correctly."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-011",
+    "epic": "Owner Dashboard & Reporting",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to export my financial data to CSV files",
+    "so_that": "I can share it with my accountant and use it in other software.",
+    "requirement_ids": [
+      "REQ-057"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-510-a",
+        "given": "I am viewing the daily transaction report",
+        "when": "I click the 'Export to CSV' button",
+        "then": "a CSV file containing a line item for each transaction from that day is downloaded."
+      },
+      {
+        "id": "AC-510-b",
+        "given": "I am viewing the monthly summary report for a location",
+        "when": "I click 'Export to CSV'",
+        "then": "a CSV file is downloaded containing columns for gross revenue, platform fees, refunds, and net revenue for that month."
+      }
+    ],
+    "edge_cases": [
+      "The exported CSV has formatting issues when opened in Excel.",
+      "The export fails for very large date ranges due to a timeout."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-012",
+    "epic": "Owner Dashboard & Reporting",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to see a high-level aggregate view of all my locations",
+    "so_that": "I can monitor the overall health of my business without drilling into each location individually.",
+    "requirement_ids": [
+      "REQ-028"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-511-a",
+        "given": "I am logged in as an 'Owner' of multiple locations",
+        "when": "I navigate to the aggregate dashboard",
+        "then": "I see a summary card for each location showing its total revenue for the day."
+      },
+      {
+        "id": "AC-511-b",
+        "given": "I am on the aggregate dashboard",
+        "when": "I look at a location's summary card",
+        "then": "I see a count of machines currently in 'idle', 'running', and 'out of order' states."
+      },
+      {
+        "id": "AC-511-c",
+        "given": "I am on the aggregate dashboard",
+        "when": "I click on a specific location's summary",
+        "then": "I am taken to the detailed dashboard for that location."
+      }
+    ],
+    "edge_cases": [
+      "A newly added location does not appear on the aggregate view immediately.",
+      "The aggregate revenue totals do not match the sum of the individual location reports."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-013",
+    "epic": "Machine & Maintenance Management",
+    "as_a": "Single-Location Laundromat Manager",
+    "i_want": "to be alerted on my dashboard when a machine reports a fault",
+    "so_that": "I can dispatch a technician quickly and minimize downtime.",
+    "requirement_ids": [
+      "REQ-007",
+      "REQ-061"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-512-a",
+        "given": "a washer's IoT device detects a drainage error and publishes a fault code",
+        "when": "the backend system processes this event",
+        "then": "a new maintenance alert is created and displayed prominently on the dashboard for that location."
+      },
+      {
+        "id": "AC-512-b",
+        "given": "an active maintenance alert exists for Machine D-04",
+        "when": "I view the machine status map",
+        "then": "Machine D-04 is marked with a special fault indicator."
+      }
+    ],
+    "edge_cases": [
+      "The system generates duplicate alerts for the same ongoing fault.",
+      "An alert is not cleared automatically after the fault condition is resolved."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-014",
+    "epic": "Machine & Maintenance Management",
+    "as_a": "Laundromat Attendant",
+    "i_want": "to log maintenance activities and notes for a machine",
+    "so_that": "we have a clear history of all repairs and can track ongoing issues.",
+    "requirement_ids": [
+      "REQ-026",
+      "REQ-030"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-513-a",
+        "given": "I am logged in as an 'Attendant' and notice a dryer is making a loud noise",
+        "when": "I select that dryer in the dashboard, create a new maintenance log entry with the note 'Bad belt', and set its status to 'Under Repair'",
+        "then": "the machine's public status is changed to 'Out of Order' and the note is saved to its history."
+      },
+      {
+        "id": "AC-513-b",
+        "given": "a manager is viewing the maintenance history for that dryer",
+        "when": "they review the log",
+        "then": "they can see my entry with the timestamp, my name, and the note."
+      }
+    ],
+    "edge_cases": [
+      "Two staff members try to log a maintenance note for the same machine simultaneously.",
+      "A staff member forgets to change the machine's status back to 'Idle' after a repair is completed."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-015",
+    "epic": "Customer Engagement & Loyalty",
+    "as_a": "Laundromat Customer",
+    "i_want": "to earn loyalty points for my spending and redeem them for free washes",
+    "so_that": "I feel rewarded for being a frequent customer.",
+    "requirement_ids": [
+      "REQ-017",
+      "REQ-018"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-514-a",
+        "given": "I am a registered user with an account",
+        "when": "I pay for a $4.50 wash cycle",
+        "then": "4 loyalty points are added to my account balance."
+      },
+      {
+        "id": "AC-514-b",
+        "given": "I have 120 loyalty points in my account",
+        "when": "I choose to start a standard wash and select the option to 'Redeem 100 points'",
+        "then": "the cycle starts without charging my payment method and my point balance is reduced to 20."
+      }
+    ],
+    "edge_cases": [
+      "I try to redeem points for a premium, non-standard wash cycle.",
+      "A transaction is refunded, and the earned loyalty points need to be clawed back."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-016",
+    "epic": "Customer Engagement & Loyalty",
+    "as_a": "Laundromat Customer",
+    "i_want": "to subscribe to a monthly 'Spin Pass'",
+    "so_that": "I can get unlimited standard washes for a fixed price and save money.",
+    "requirement_ids": [
+      "REQ-019",
+      "REQ-020",
+      "REQ-021"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-515-a",
+        "given": "I am a registered customer",
+        "when": "I subscribe to the Spin Pass for a specific location",
+        "then": "I am charged the monthly fee of $25."
+      },
+      {
+        "id": "AC-515-b",
+        "given": "I am an active Spin Pass subscriber",
+        "when": "I select a standard wash cycle at my designated location",
+        "then": "the cost is shown as $0 and I can start it without a new charge."
+      },
+      {
+        "id": "AC-515-c",
+        "given": "I am an active Spin Pass subscriber",
+        "when": "I select a premium 'sanitize' cycle that normally costs $8.00",
+        "then": "the cost is shown as $4.00 (a 50% discount)."
+      }
+    ],
+    "edge_cases": [
+      "I try to use my subscription benefits at a different location than the one I subscribed to.",
+      "My monthly subscription payment fails to renew.",
+      "The price of a 'standard wash' changes after I subscribe."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-017",
+    "epic": "Customer Engagement & Loyalty",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to send promotional push notifications to my customers",
+    "so_that": "I can increase business during off-peak hours.",
+    "requirement_ids": [
+      "REQ-060"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-516-a",
+        "given": "I am logged into the owner dashboard",
+        "when": "I navigate to the promotions tool, type a message like 'Half-price dryers all day Thursday!', and send it to my 'Downtown' location",
+        "then": "all registered customers who have opted-in to notifications for the 'Downtown' location receive the push notification."
+      }
+    ],
+    "edge_cases": [
+      "I accidentally send a promotion to the wrong location.",
+      "The message contains a typo and I need to retract or correct it.",
+      "A large number of customers have opted out of notifications, limiting the promotion's reach."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-018",
+    "epic": "Refund Management",
+    "as_a": "Laundromat Customer",
+    "i_want": "to request a refund from the app if a machine fails",
+    "so_that": "I can easily report a problem and get my money back without having to find an attendant.",
+    "requirement_ids": [
+      "REQ-037"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-517-a",
+        "given": "a machine I paid for stopped mid-cycle",
+        "when": "I go to my transaction history, select that transaction, and tap 'Request Refund'",
+        "then": "my request is submitted and its status is shown as 'Pending Review'."
+      }
+    ],
+    "edge_cases": [
+      "I try to request a refund for a transaction that was completed successfully days ago.",
+      "The app is offline and cannot submit the refund request."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-019",
+    "epic": "Refund Management",
+    "as_a": "Single-Location Laundromat Manager",
+    "i_want": "to review, approve, or deny customer refund requests",
+    "so_that": "I have full control over issuing refunds for my location.",
+    "requirement_ids": [
+      "REQ-038"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-518-a",
+        "given": "a customer has submitted a refund request and it appears in my dashboard queue",
+        "when": "I review the details and click 'Approve'",
+        "then": "the refund is processed via Stripe and the request's status is updated to 'Approved'."
+      },
+      {
+        "id": "AC-518-b",
+        "given": "a customer has submitted a refund request",
+        "when": "I investigate and determine it is not valid and click 'Deny'",
+        "then": "no refund is issued and the request's status is updated to 'Denied'."
+      }
+    ],
+    "edge_cases": [
+      "I approve a refund by mistake and need to undo it.",
+      "The Stripe API call to process the refund fails."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-020",
+    "epic": "Peak Hour Management",
+    "as_a": "Laundromat Customer",
+    "i_want": "to join a virtual waitlist when all machines are busy",
+    "so_that": "I can be notified when one is free and don't have to stand around waiting.",
+    "requirement_ids": [
+      "REQ-046",
+      "REQ-047",
+      "REQ-048"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-519-a",
+        "given": "all front-load washers are in use",
+        "when": "I tap the 'Notify Me' button for that machine type",
+        "then": "I am added to the waitlist."
+      },
+      {
+        "id": "AC-519-b",
+        "given": "I am first in the waitlist and a front-load washer becomes available",
+        "when": "the system detects the machine is free",
+        "then": "I receive a push notification and have 5 minutes to start a cycle on that machine."
+      },
+      {
+        "id": "AC-519-c",
+        "given": "I was notified that a machine is available but did not start a cycle within 5 minutes",
+        "when": "my 5-minute window expires",
+        "then": "the next person in the queue is notified, and I lose my spot."
+      }
+    ],
+    "edge_cases": [
+      "I join the waitlist but then leave the laundromat and am no longer in range to use the machine.",
+      "Multiple machines of the same type become free simultaneously.",
+      "I cancel my spot on the waitlist."
+    ],
+    "priority": "should"
+  },
+  {
+    "id": "US-021",
+    "epic": "System Foundation",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "the system to securely process payments and settle funds to my account",
+    "so_that": "I can trust the platform with my revenue and get paid reliably.",
+    "requirement_ids": [
+      "REQ-011",
+      "REQ-035",
+      "REQ-036"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-520-a",
+        "given": "a customer completes a $10.00 transaction at my location",
+        "when": "the payment is processed by Stripe Connect",
+        "then": "a 7% platform fee ($0.70) is taken, and the remaining $9.30 is allocated to my connected Stripe account."
+      },
+      {
+        "id": "AC-520-b",
+        "given": "funds have been settled to my Stripe Connect account",
+        "when": "the configured payout schedule is reached",
+        "then": "the funds are paid out to my business bank account on a two-day rolling basis."
+      }
+    ],
+    "edge_cases": [
+      "A customer's payment is subject to a chargeback.",
+      "My connected Stripe account information is invalid or needs re-verification.",
+      "There is a delay in the payout from Stripe."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-022",
+    "epic": "System Foundation",
+    "as_a": "Laundromat Customer",
+    "i_want": "to use the application in either English or Spanish",
+    "so_that": "I can comfortably use the service in my preferred language.",
+    "requirement_ids": [
+      "REQ-042"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-521-a",
+        "given": "my phone's operating system language is set to Spanish",
+        "when": "I open the SpinCycle app",
+        "then": "all text in the user interface is displayed in Spanish."
+      },
+      {
+        "id": "AC-521-b",
+        "given": "my phone's operating system language is set to French",
+        "when": "I open the SpinCycle app",
+        "then": "the user interface defaults to English."
+      }
+    ],
+    "edge_cases": [
+      "Some text remains untranslated or is poorly translated.",
+      "The layout breaks for longer Spanish words compared to their English counterparts."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-023",
+    "epic": "System Foundation",
+    "as_a": "System Administrator",
+    "i_want": "the system to handle data retention and purging correctly",
+    "so_that": "we comply with legal requirements and manage storage costs efficiently.",
+    "requirement_ids": [
+      "REQ-049",
+      "REQ-050"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-522-a",
+        "given": "a financial transaction record is 7 years and 1 day old",
+        "when": "I query the database",
+        "then": "the record still exists."
+      },
+      {
+        "id": "AC-522-b",
+        "given": "raw IoT telemetry event data is 91 days old",
+        "when": "the daily data purge job runs",
+        "then": "that raw event data is deleted from the database."
+      },
+      {
+        "id": "AC-522-c",
+        "given": "raw IoT data from 91 days ago has been purged",
+        "when": "an owner views trend analysis reports for that period",
+        "then": "the reports are still available, generated from the retained daily aggregate data."
+      }
+    ],
+    "edge_cases": [
+      "The data purge job fails to run, causing excessive data accumulation.",
+      "A legal hold requires retaining specific data beyond the normal 7-year period."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-024",
+    "epic": "System Foundation",
+    "as_a": "Product Owner",
+    "i_want": "the system to be performant, reliable, secure, and resilient",
+    "so_that": "it provides a trustworthy and high-quality service to both customers and owners.",
+    "requirement_ids": [
+      "REQ-039",
+      "REQ-045",
+      "REQ-051",
+      "REQ-058",
+      "REQ-063",
+      "REQ-009",
+      "REQ-010"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-523-a",
+        "given": "the system is under normal operation",
+        "when": "we measure uptime over a calendar month",
+        "then": "the public-facing APIs achieve at least 99.9% availability."
+      },
+      {
+        "id": "AC-523-b",
+        "given": "a laundromat's internet connection goes down",
+        "when": "an IoT device on a machine sends status updates via MQTT every 10 seconds",
+        "then": "the device buffers at least 4 hours of these events and replays them when connectivity is restored."
+      },
+      {
+        "id": "AC-523-c",
+        "given": "a single user of the customer API",
+        "when": "they make more than 100 requests in a 60-second window",
+        "then": "their subsequent requests receive a '429 Too Many Requests' error."
+      },
+      {
+        "id": "AC-523-d",
+        "given": "a performance test is run",
+        "when": "the API is subjected to a load of 500 concurrent users for a single location",
+        "then": "API response times do not degrade beyond established thresholds."
+      }
+    ],
+    "edge_cases": [
+      "A large-scale DDoS attack targets the API.",
+      "An IoT device's buffer overflows during a prolonged internet outage."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-025",
+    "epic": "System Foundation",
+    "as_a": "Laundromat Customer with a disability",
+    "i_want": "the mobile app and PWA to be compliant with WCAG 2.1 AA standards",
+    "so_that": "I can use the service effectively with assistive technologies like screen readers or high-contrast mode.",
+    "requirement_ids": [
+      "REQ-041"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-524-a",
+        "given": "I use a screen reader on my phone",
+        "when": "I navigate through the app",
+        "then": "all interactive elements (buttons, links, form fields) are properly labeled and announced."
+      },
+      {
+        "id": "AC-524-b",
+        "given": "I have low vision and enable high-contrast mode",
+        "when": "I view the machine map or any other screen",
+        "then": "the text and UI elements meet the minimum color contrast ratios defined by WCAG 2.1 AA."
+      }
+    ],
+    "edge_cases": [
+      "A third-party component (like the payment form) is not fully accessible.",
+      "New features are released that have not yet been audited for accessibility compliance."
+    ],
+    "priority": "must"
+  },
+  {
+    "id": "US-026",
+    "epic": "Peak Hour Management",
+    "as_a": "Laundromat Owner (Multi-Location)",
+    "i_want": "to optionally enable and configure an idle fee for a location",
+    "so_that": "I can incentivize customers to collect their laundry promptly, increasing machine turnover during busy periods.",
+    "requirement_ids": [
+      "REQ-023",
+      "REQ-024",
+      "REQ-025"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-525-a",
+        "given": "I am in my location's settings page on the dashboard",
+        "when": "I enable the 'Idle Fee' toggle and set the rate to $0.25/min with a 15-minute grace period",
+        "then": "the idle fee system is activated for that location with my specified settings."
+      },
+      {
+        "id": "AC-525-b",
+        "given": "the idle fee is enabled and a customer's cycle has been finished for 16 minutes and 30 seconds",
+        "when": "the customer opens the machine door",
+        "then": "the system charges them for 2 full minutes of idle time, totaling $0.50."
+      },
+      {
+        "id": "AC-525-c",
+        "given": "I have disabled the 'Idle Fee' toggle for a location",
+        "when": "a customer leaves their laundry for 30 minutes after a cycle ends",
+        "then": "they are not charged any idle fee."
+      }
+    ],
+    "edge_cases": [
+      "A customer is not clearly notified about the idle fee policy before starting their machine.",
+      "The door sensor reports an open event incorrectly, stopping the idle fee calculation prematurely."
+    ],
+    "priority": "could"
+  },
+  {
+    "id": "US-027",
+    "epic": "Advanced Features",
+    "as_a": "Single-Location Laundromat Manager",
+    "i_want": "to create a reservation for multiple machines in a single operation",
+    "so_that": "I can efficiently block out time for my corporate clients who need guaranteed availability.",
+    "requirement_ids": [
+      "REQ-053",
+      "REQ-054",
+      "REQ-055"
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-526-a",
+        "given": "I am on the reservations page of the dashboard",
+        "when": "I select three specific washers, a date, and a time window of 6 AM to 8 AM, and confirm the reservation",
+        "then": "a single reservation is created that blocks all three machines for that period."
+      },
+      {
+        "id": "AC-526-b",
+        "given": "a reservation exists for washer W-01 from 6 AM to 8 AM",
+        "when": "a regular customer views the machine map at 7 AM",
+        "then": "washer W-01 is shown as unavailable or reserved."
+      },
+      {
+        "id": "AC-526-c",
+        "given": "a reservation exists with a start time of 6 AM",
+        "when": "I cancel the reservation at 4:01 AM (less than 2 hours before)",
+        "then": "a 50% cancellation fee is charged to the client's account on file."
+      }
+    ],
+    "edge_cases": [
+      "I try to reserve a machine that is already part of another reservation at the same time.",
+      "A regular customer starts a long cycle that overlaps with the beginning of a reservation window.",
+      "The basis for calculating the 'reservation cost' (for the cancellation fee) is not defined."
+    ],
+    "priority": "could"
+  }
+]

@@ -1,0 +1,46 @@
+```mermaid
+activityDiagram
+    title Handling Unattended Laundry
+
+    start
+    :Laundry cycle completes;
+    :System starts a timer;
+
+    fork
+        :Wait for `door_open` event from Machine;
+    fork again
+        :Wait 5 minutes;
+    end fork
+
+    if (Door was opened in last 5 mins?) then (yes)
+      :Process ends;
+      stop
+    else (no)
+      :Send 'Collect Laundry' reminder notification;
+    endif
+
+    fork
+        :Continue waiting for `door_open` event;
+    fork again
+        :Wait another 10 minutes (15 mins total);
+    end fork
+
+    if (Door was opened?) then (yes)
+      :Process ends;
+      stop
+    else (no)
+      if (Location has Idle Fee enabled?) then (yes)
+        :Start accruing idle fee;
+        repeat
+          :Wait 1 minute;
+          :Add fee for 1 minute to total;
+        repeat while (Door is not opened?)
+        :Door opened, stop accruing fees;
+        :Finalize and charge total idle fee via Stripe;
+      else (no)
+        :Process ends (no fee charged);
+      endif
+    endif
+
+    stop
+```

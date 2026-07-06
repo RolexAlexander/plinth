@@ -1,0 +1,817 @@
+[
+  {
+    "id": "ENT-User",
+    "name": "User",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "email",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "password_hash",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "auth_provider",
+        "type": "Enum: ['EMAIL', 'GOOGLE', 'APPLE']",
+        "nullable": false
+      },
+      {
+        "name": "provider_user_id",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "full_name",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "phone_number",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "created_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "updated_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": []
+  },
+  {
+    "id": "ENT-Customer",
+    "name": "Customer",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "stripe_customer_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "loyalty_points",
+        "type": "Integer",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-User",
+        "kind": "one_to_one",
+        "via": "user_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-Staff",
+    "name": "Staff",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "role",
+        "type": "Enum: ['OWNER', 'MANAGER', 'ATTENDANT']",
+        "nullable": false
+      },
+      {
+        "name": "totp_secret_encrypted",
+        "type": "String",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-User",
+        "kind": "one_to_one",
+        "via": "user_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-Location",
+    "name": "Location",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "name",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "address",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "stripe_connect_account_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "idle_fee_enabled",
+        "type": "Boolean",
+        "nullable": false
+      },
+      {
+        "name": "idle_fee_rate_cents",
+        "type": "Integer",
+        "nullable": true
+      },
+      {
+        "name": "idle_fee_grace_period_minutes",
+        "type": "Integer",
+        "nullable": true
+      },
+      {
+        "name": "created_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "updated_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": []
+  },
+  {
+    "id": "ENT-StaffLocationAssignment",
+    "name": "StaffLocationAssignment",
+    "attributes": [
+      {
+        "name": "staff_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Staff",
+        "kind": "many_to_one",
+        "via": "staff_id"
+      },
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-Machine",
+    "name": "Machine",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "display_name",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "qr_code_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "type",
+        "type": "Enum: ['WASHER', 'DRYER']",
+        "nullable": false
+      },
+      {
+        "name": "model_description",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "current_status",
+        "type": "Enum: ['IDLE', 'RUNNING', 'OUT_OF_ORDER']",
+        "nullable": false
+      },
+      {
+        "name": "installed_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-CycleType",
+    "name": "CycleType",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "name",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "description",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "machine_type",
+        "type": "Enum: ['WASHER', 'DRYER']",
+        "nullable": false
+      },
+      {
+        "name": "price_cents",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "duration_minutes",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "is_premium",
+        "type": "Boolean",
+        "nullable": false
+      },
+      {
+        "name": "is_standard",
+        "type": "Boolean",
+        "nullable": false
+      }
+    ],
+    "relationships": []
+  },
+  {
+    "id": "ENT-LaundrySession",
+    "name": "LaundrySession",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "machine_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "customer_id",
+        "type": "UUID",
+        "nullable": true
+      },
+      {
+        "name": "cycle_type_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "type": "Enum: ['PENDING', 'RUNNING', 'COMPLETED', 'FAULTED']",
+        "nullable": false
+      },
+      {
+        "name": "started_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "scheduled_end_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "actual_end_at",
+        "type": "Timestamp",
+        "nullable": true
+      },
+      {
+        "name": "door_opened_at",
+        "type": "Timestamp",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Machine",
+        "kind": "many_to_one",
+        "via": "machine_id"
+      },
+      {
+        "to": "ENT-Customer",
+        "kind": "many_to_one",
+        "via": "customer_id"
+      },
+      {
+        "to": "ENT-CycleType",
+        "kind": "many_to_one",
+        "via": "cycle_type_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-Transaction",
+    "name": "Transaction",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "laundry_session_id",
+        "type": "UUID",
+        "nullable": true
+      },
+      {
+        "name": "customer_id",
+        "type": "UUID",
+        "nullable": true
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "stripe_charge_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "amount_cents",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "platform_fee_cents",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "net_amount_cents",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "currency",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "type",
+        "type": "Enum: ['CYCLE_PAYMENT', 'IDLE_FEE', 'SUBSCRIPTION', 'RESERVATION_FEE', 'CANCELLATION_FEE']",
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "type": "Enum: ['SUCCEEDED', 'PENDING', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED']",
+        "nullable": false
+      },
+      {
+        "name": "created_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-LaundrySession",
+        "kind": "many_to_one",
+        "via": "laundry_session_id"
+      },
+      {
+        "to": "ENT-Customer",
+        "kind": "many_to_one",
+        "via": "customer_id"
+      },
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-RefundRequest",
+    "name": "RefundRequest",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "transaction_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "requested_by_customer_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "reviewed_by_staff_id",
+        "type": "UUID",
+        "nullable": true
+      },
+      {
+        "name": "status",
+        "type": "Enum: ['PENDING', 'APPROVED', 'DENIED']",
+        "nullable": false
+      },
+      {
+        "name": "reason_text",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "requested_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "reviewed_at",
+        "type": "Timestamp",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Transaction",
+        "kind": "one_to_one",
+        "via": "transaction_id"
+      },
+      {
+        "to": "ENT-Customer",
+        "kind": "many_to_one",
+        "via": "requested_by_customer_id"
+      },
+      {
+        "to": "ENT-Staff",
+        "kind": "many_to_one",
+        "via": "reviewed_by_staff_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-Subscription",
+    "name": "Subscription",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "customer_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "stripe_subscription_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "type": "Enum: ['ACTIVE', 'CANCELED', 'PAST_DUE']",
+        "nullable": false
+      },
+      {
+        "name": "start_date",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "current_period_end",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "created_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "updated_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Customer",
+        "kind": "many_to_one",
+        "via": "customer_id"
+      },
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-MaintenanceLog",
+    "name": "MaintenanceLog",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "machine_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "created_by_staff_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "notes",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "entry_type",
+        "type": "Enum: ['FAULT_REPORTED', 'REPAIR_NOTE', 'STATUS_CHANGE']",
+        "nullable": false
+      },
+      {
+        "name": "created_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Machine",
+        "kind": "many_to_one",
+        "via": "machine_id"
+      },
+      {
+        "to": "ENT-Staff",
+        "kind": "many_to_one",
+        "via": "created_by_staff_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-Reservation",
+    "name": "Reservation",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "created_by_staff_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "start_time",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "end_time",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "type": "Enum: ['CONFIRMED', 'CANCELLED', 'COMPLETED']",
+        "nullable": false
+      },
+      {
+        "name": "cancellation_reason",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "notes",
+        "type": "String",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      },
+      {
+        "to": "ENT-Staff",
+        "kind": "many_to_one",
+        "via": "created_by_staff_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-ReservedMachine",
+    "name": "ReservedMachine",
+    "attributes": [
+      {
+        "name": "reservation_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "machine_id",
+        "type": "UUID",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Reservation",
+        "kind": "many_to_one",
+        "via": "reservation_id"
+      },
+      {
+        "to": "ENT-Machine",
+        "kind": "many_to_one",
+        "via": "machine_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-WaitlistEntry",
+    "name": "WaitlistEntry",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "customer_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "machine_type",
+        "type": "Enum: ['WASHER', 'DRYER']",
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "type": "Enum: ['WAITING', 'NOTIFIED', 'EXPIRED', 'CLAIMED', 'CANCELLED']",
+        "nullable": false
+      },
+      {
+        "name": "created_at",
+        "type": "Timestamp",
+        "nullable": false
+      },
+      {
+        "name": "notified_at",
+        "type": "Timestamp",
+        "nullable": true
+      },
+      {
+        "name": "expires_at",
+        "type": "Timestamp",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      },
+      {
+        "to": "ENT-Customer",
+        "kind": "many_to_one",
+        "via": "customer_id"
+      }
+    ]
+  },
+  {
+    "id": "ENT-PromotionalNotification",
+    "name": "PromotionalNotification",
+    "attributes": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "location_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "sent_by_staff_id",
+        "type": "UUID",
+        "nullable": false
+      },
+      {
+        "name": "message_body",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "sent_at",
+        "type": "Timestamp",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "to": "ENT-Location",
+        "kind": "many_to_one",
+        "via": "location_id"
+      },
+      {
+        "to": "ENT-Staff",
+        "kind": "many_to_one",
+        "via": "sent_by_staff_id"
+      }
+    ]
+  }
+]

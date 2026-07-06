@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "project_name": "SpinCycle",
+  "package_version": "0.1.0",
+  "generated_at": "2026-07-06T17:45:28.641841",
+  "source_provenance": [
+    "tests/sample_transcript.txt"
+  ],
+  "artifacts": {
+    "requirements": {
+      "human": "srs.md",
+      "machine": "requirements.json"
+    },
+    "domain_model": {
+      "human": "uml/domain_class.mermaid",
+      "machine": "domain_model.json"
+    },
+    "user_stories": {
+      "human": "user_stories.md",
+      "machine": "user_stories.json"
+    },
+    "personas": {
+      "human": "personas.md",
+      "machine": "personas.json"
+    },
+    "open_questions": "open_questions.json",
+    "decisions": "decisions.md",
+    "traceability": "traceability.json"
+  },
+  "counts": {
+    "requirements": 63,
+    "confirmed": 57,
+    "assumed": 4,
+    "open": 1
+  },
+  "coverage": {
+    "candidate_statements": 108,
+    "requirements": 63,
+    "coverage_ratio": 1.0,
+    "uncovered_topics": [],
+    "uncovered_candidates": [
+      "- Dana Reeves (Operations Manager, CleanWave Laundromats \u2014 pilot partner)",
+      "Priya, you want to talk architecture",
+      "Exportable to CSV for their accountants",
+      "JAMES: Let's talk about payments in more detail",
+      "Stripe Connect \u2014 are we doing destination charges or separate charges and transfers",
+      "MARCUS: Refunds need to be handled too",
+      "MARCUS: The app needs to meet WCAG 2",
+      "Right-to-left support isn't needed for launch but the layout engine shouldn't preclude it",
+      "Any final must-haves we haven't touched",
+      "They'd love to reserve three washers from six to eight AM"
+    ]
+  },
+  "stories_coverage": {
+    "must_should_total": 56,
+    "must_should_covered": 56,
+    "uncovered_must_should": [],
+    "coverage_ratio": 1.0
+  },
+  "blocking_questions": [],
+  "definition_of_ready": {
+    "every_requirement_has_source": true,
+    "every_nfr_has_metric": true,
+    "every_confirmed_functional_has_ac": true,
+    "no_blocking_open_questions": true,
+    "no_dangling_references": true,
+    "no_orphan_requirements": true,
+    "has_user_stories": true
+  },
+  "ready_for": [
+    "architecture_agent",
+    "backend_agent",
+    "frontend_agent",
+    "qa_agent",
+    "project_planner_agent"
+  ],
+  "numbering_gaps": [],
+  "_invariant": "ready_for is empty until blocking_questions==[] and all definition_of_ready checks pass"
+}

@@ -1,0 +1,40 @@
+```mermaid
+usecaseDiagram
+  title SpinCycle System Use Cases
+
+  actor Customer
+  actor "Laundromat Staff" as Staff
+  actor Owner
+  actor Manager
+  actor Attendant
+
+  Owner --|> Manager
+  Manager --|> Attendant
+  Attendant --|> Staff
+
+  rectangle "SpinCycle System" {
+    Customer -- (Start Laundry Session)
+    (Start Laundry Session) .> (Scan QR Code) : includes
+    (Start Laundry Session) .> (Pay for Cycle) : includes
+    Customer -- (Receive Notifications)
+    Customer -- (Manage Account)
+    (Manage Account) <.. (Manage Loyalty Program) : extends
+    (Manage Account) <.. (Manage Subscription) : extends
+    Customer -- (Join Machine Waitlist)
+    Customer -- (Request Refund)
+
+    Staff -- (View Machine Status)
+    Attendant -- (Log Maintenance)
+    Manager -- (Manage Refunds)
+    Manager -- (Manage Reservations)
+    Manager -- (View Location Reports)
+    Owner -- (View Aggregate Reports)
+    Owner -- (Manage Staff Accounts)
+    Owner -- (Configure Location Settings)
+    Owner -- (Send Promotions)
+  }
+
+  actor "Stripe Payment System" as Stripe
+  (Pay for Cycle) -- Stripe
+  (Manage Refunds) -- Stripe
+```

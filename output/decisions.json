@@ -1,0 +1,39 @@
+[
+  {
+    "id": "DEC-001",
+    "statement": "Adopted resolution: A team is implicitly defined by the Location (laundromat site). A Manager is assigned to a Location, and their team consists of all attendants assigned to that same Location.",
+    "rationale": "Resolved open question: How is a 'team' defined for reporting and permissions? Is it an explicit entity that Admins create and manage, or is it implicitly defined by the user's 'manager' field in their profile?",
+    "related_ids": [
+      "REQ-005",
+      "REQ-008"
+    ],
+    "resolved_by": "human"
+  },
+  {
+    "id": "DEC-002",
+    "statement": "Adopted resolution: ",
+    "rationale": "Resolved open question: What is the intended relationship between Contacts and Organizations? Can a Contact exist without being associated with an Organization? Can a Contact be associated with multiple Organizations?",
+    "related_ids": [
+      "REQ-002"
+    ],
+    "resolved_by": "human"
+  },
+  {
+    "id": "DEC-003",
+    "statement": "Adopted default assumption: Resolve the critic issue by adopting the current implementation draft for REQ-053.",
+    "rationale": "Deferred open question: QA Critic Objection: The acceptance criterion (AC-053-a) fails to test the core user need. The stakeholder requested to 'reserve three washers from six to eight AM,' implying a single bulk action. The AC only tests that a reservation is recorded for three machines, but does not validate that it can be accomplished in a 'single operation' as the requirement statement says. A developer could build a UI that passes the test but fails the user by requiring three separate reservation actions. (target: REQ-053)",
+    "related_ids": [
+      "REQ-053"
+    ],
+    "resolved_by": "human"
+  },
+  {
+    "id": "DEC-004",
+    "statement": "Adopted default assumption: Resolve the critic issue by adopting the current implementation draft for REQ-055.",
+    "rationale": "Deferred open question: QA Critic Objection: The requirement for a 50% cancellation fee is critically ambiguous because it fails to define what the fee is 50% of. There is no concept of a 'reservation price' or 'expected cycle cost' in the domain model or requirements from which to calculate the fee. This business rule cannot be implemented as written. (target: REQ-055)",
+    "related_ids": [
+      "REQ-055"
+    ],
+    "resolved_by": "human"
+  }
+]

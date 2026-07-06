@@ -1,0 +1,28 @@
+```mermaid
+sequenceDiagram
+    title: Customer Starts Laundry Session
+    participant C as Customer App
+    participant S as SpinCycle Backend
+    participant P as Stripe API
+    participant M as Laundry Machine (IoT)
+
+    C->>+S: 1. Scans QR Code, requests machine details (QR_ID)
+    S-->>-C: 2. Returns machine status and cycle options
+
+    C->>+S: 3. Selects cycle, requests to start session
+    S->>+P: 4. Create Payment Intent (Amount, Currency)
+    P-->>-S: 5. Returns Payment Intent ID & Client Secret
+    S-->>-C: 6. Forwards Client Secret to App
+
+    C->>+P: 7. Confirms payment with card details (via Stripe Elements)
+    P-->>-C: 8. Payment authorization result
+    note right of S: Stripe sends `charge.succeeded` webhook asynchronously
+    P-->>S: 9. Webhook: Payment Successful
+
+    S->>S: 10. Verify webhook, create LaundrySession, log Transaction
+    S->>M: 11. Command: Start Cycle (CycleTypeID)
+    M->>M: 12. Cycle Starts
+    M-->>S: 13. Publishes status change: RUNNING (via MQTT)
+
+    S-->>-C: 14. Session started confirmation
+```
