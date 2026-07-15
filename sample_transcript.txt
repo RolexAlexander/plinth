@@ -1,0 +1,127 @@
+STAKEHOLDER INTERVIEW TRANSCRIPT
+Project: SpinCycle — Smart Laundromat Management Platform
+Date: June 25, 2026
+Participants:
+  - Marcus Chen (Product Owner, SpinCycle Inc.)
+  - Dana Reeves (Operations Manager, CleanWave Laundromats — pilot partner)
+  - Priya Kapoor (Lead Developer, SpinCycle Inc.)
+  - James Whitfield (Facilitator / Business Analyst)
+
+==========================================================================
+
+JAMES: Thanks everyone for joining. Marcus, can you kick us off with the high-level vision?
+
+MARCUS: Sure. SpinCycle is a mobile-first platform for self-service laundromats. We want to let customers walk in, scan a QR code on any machine, pay from their phone, and get notified when their cycle is done. On the owner side, Dana and folks like her need a dashboard showing real-time machine status, revenue reports, and maintenance alerts. Think of it as "the Square for laundromats."
+
+JAMES: Dana, from an operator perspective, what are the biggest pain points today?
+
+DANA: Three things kill us. First, coin jams — we lose about twelve percent of revenue to jammed coin slots and people walking away. Going cashless would be huge. Second, we have no idea which machines are running and which are sitting idle unless someone physically walks the floor. Third, maintenance is reactive. A dryer runs with a bad belt for two weeks before anyone notices. By then it's a two-hundred-dollar repair instead of a forty-dollar part.
+
+JAMES: So real-time machine telemetry is a must?
+
+DANA: Absolutely. Each machine should report whether it's idle, running, or out of order. Ideally we'd also get cycle-time remaining so customers can plan around it.
+
+MARCUS: We've specced out small IoT controller boards that bolt onto standard commercial washers and dryers. They'll push status over MQTT every ten seconds. Priya, you want to talk architecture?
+
+PRIYA: Yeah, the IoT boards publish to an MQTT broker. Our backend ingests those events into a time-series store — we're leaning toward TimescaleDB on top of Postgres. The mobile app and owner dashboard both consume a REST API backed by that store. For payments we plan to integrate Stripe Connect so each laundromat location is a connected account and funds settle directly to the owner.
+
+JAMES: Let's drill into the customer flow. A person walks into the laundromat — what happens step by step?
+
+MARCUS: They open the SpinCycle app — or a progressive web app if they don't want to install anything. They see a map of the location showing which machines are available in green, in-use in yellow, and out-of-order in red. They tap an available machine, pick a wash cycle — normal, delicate, heavy-duty — and confirm payment. The machine starts within five seconds of payment confirmation. When the cycle ends, they get a push notification saying "Your laundry is done at Machine W-07."
+
+JAMES: What about users who don't have the app? Walk-ins?
+
+MARCUS: Every machine has a QR code. Scanning it opens the PWA, which handles one-time guest checkout. No account required. But if they do create an account they can earn loyalty points.
+
+JAMES: Let's talk about that loyalty program. What's the structure?
+
+MARCUS: Simple tier system. Every dollar spent earns one point. At a hundred points you get a free standard wash — roughly a ten-percent rebate. We want a "Spin Pass" monthly subscription option too: twenty-five dollars a month for unlimited standard washes at a single location. Premium cycles like sanitize or extra-large would be discounted fifty percent for subscribers.
+
+DANA: I love the subscription idea. My regulars come three to four times a week. A flat monthly fee keeps them loyal and gives me predictable revenue.
+
+JAMES: How do you handle the case where someone's laundry is done but they don't come back for an hour and the machine is sitting there occupied?
+
+DANA: That's a real problem. During peak hours — Saturday mornings especially — every machine matters. I'd want an "unattended laundry" alert. Five minutes after a cycle ends, if the door hasn't been opened, send the customer a reminder. After fifteen minutes, start a small idle fee — maybe twenty-five cents per minute — so people have an incentive to come get their stuff.
+
+MARCUS: We debated the idle fee internally. It's a bit aggressive for launch. I'd say we build the notifications and the idle-fee logic but keep the fee togglable per location. Dana can turn it on, another owner might not.
+
+JAMES: Priya, any technical concerns with the idle-fee metering?
+
+PRIYA: The IoT board can detect door-open events, so we'll know when someone actually unloads. The tricky part is making sure the billing is accurate to the second when someone opens the door mid-minute. We should probably bill in full-minute increments and clearly disclose that.
+
+JAMES: Fair. Let's move to the owner dashboard. Dana, what do you need to see day to day?
+
+DANA: A live floor map — same as the customer but with more detail. Revenue today versus yesterday versus same day last week. Alerts for machines that have faulted. And a maintenance log where my technician can mark a machine as "under repair" and add notes.
+
+MARCUS: We also want a revenue analytics page: revenue per machine, per cycle type, peak hours heatmap, and average turnaround time. Exportable to CSV for their accountants.
+
+JAMES: What about multi-location support?
+
+DANA: I have three locations now, planning a fourth. I need to switch between them or see an aggregate view. Each location has its own staff, so role-based access is important — my floor attendants should see machine status but not revenue numbers.
+
+JAMES: So we need roles: owner, manager, attendant?
+
+MARCUS: Yes. Owner sees everything. Manager sees everything for their assigned location. Attendant sees machine status and can flag maintenance issues but no financial data.
+
+JAMES: Authentication — what's the plan?
+
+PRIYA: For customers, email plus password or social login — Google and Apple. For the owner dashboard we want to enforce two-factor authentication, probably TOTP-based. We'll use JWTs with short-lived access tokens and longer-lived refresh tokens. Tokens scoped to location for staff roles.
+
+JAMES: Let's talk about payments in more detail. Stripe Connect — are we doing destination charges or separate charges and transfers?
+
+PRIYA: Destination charges. The platform takes a seven-percent service fee off each transaction, and the remainder settles to the laundromat's connected Stripe account. Payouts happen on a two-day rolling basis. We'll store a payment ledger locally so the dashboard can show revenue even if Stripe's reporting API is slow.
+
+MARCUS: Refunds need to be handled too. If a machine malfunctions mid-cycle, the customer should be able to request a refund from the app. It goes into a pending state, the location manager approves or denies, and then we process it through Stripe.
+
+JAMES: What if the internet goes down at a location? Those IoT boards need connectivity.
+
+PRIYA: Good question. The boards have a small flash buffer — about four hours of events. When connectivity resumes they replay the buffer in order. The app won't be able to start new machines during an outage, though. We've discussed a fallback mode where the board can accept a start command cached locally, but that opens payment-fraud risk. For MVP I'd say we just show "temporarily unavailable" and let the owner put up a sign pointing to the coin slot as backup.
+
+MARCUS: Agreed — offline machine start is a post-launch feature. We'll design the schema to support it but not implement the flow.
+
+JAMES: Accessibility and localization?
+
+MARCUS: The app needs to meet WCAG 2.1 AA. We serve diverse neighborhoods — English and Spanish at launch, with a localization framework so adding languages later is just a translation file. Right-to-left support isn't needed for launch but the layout engine shouldn't preclude it.
+
+JAMES: Performance expectations?
+
+PRIYA: Machine status updates should reflect in the app within two seconds of the MQTT event. Payment confirmation to machine start within five seconds — that's end to end including Stripe's authorization round trip. The dashboard should load initial data in under three seconds on a standard broadband connection. We're targeting ninety-nine-point-nine percent uptime for the API.
+
+JAMES: What about notifications beyond the cycle-complete alert?
+
+MARCUS: A few more. "Machine available" — if all machines are busy, a customer can join a virtual waitlist and get notified when one frees up. Promotional notifications — the owner can push a deal like "free dry with every wash this Thursday." And maintenance alerts to staff when a machine reports a fault code.
+
+DANA: The waitlist thing would be great. On Saturdays people literally stand around watching machines. If they could get a text and go grab coffee next door, that's a better experience.
+
+JAMES: How does the waitlist work mechanically?
+
+MARCUS: Customer taps "Notify me" on a machine type — say, front-load washer. When any front-load washer at that location becomes idle, the first person in the queue gets a push notification and has five minutes to start a cycle. If they don't, it moves to the next person.
+
+JAMES: Reporting and compliance — anything specific?
+
+DANA: I need daily transaction reports for my bookkeeper. And tax time is a nightmare, so if the system can generate a monthly summary with gross revenue, fees, refunds, and net by location, that would save me hours.
+
+MARCUS: We should also think about data retention. Transaction data kept for seven years for tax purposes. Machine telemetry — raw events can be purged after ninety days, but daily aggregates kept indefinitely for trend analysis.
+
+JAMES: Security requirements?
+
+PRIYA: All traffic TLS 1.3. PCI compliance is handled by Stripe since we never touch raw card numbers — we use Stripe Elements on the frontend. PII encrypted at rest — AES-256. API rate limiting to prevent abuse: a hundred requests per minute per user for the customer API, higher limits for dashboard users. We'll run quarterly penetration tests.
+
+JAMES: Any integrations beyond Stripe?
+
+MARCUS: Two on the roadmap. First, a Slack or Microsoft Teams integration so maintenance alerts go straight to a channel. Second, an open API so third-party developers can build on top — things like a campus laundry app for universities. But those are post-MVP.
+
+JAMES: Testing strategy?
+
+PRIYA: Unit tests for all business logic — payment calculations, loyalty point accrual, idle-fee metering. Integration tests against a Stripe test-mode environment. End-to-end tests using a hardware simulator that mimics MQTT events. Load testing to verify the API handles at least five hundred concurrent users per location without degradation.
+
+JAMES: Alright, I think we've covered a lot of ground. Any final must-haves we haven't touched?
+
+DANA: One more — machine reservation. I have corporate clients who wash uniforms every Tuesday morning. They'd love to reserve three washers from six to eight AM. It should block those machines from general availability during that window.
+
+MARCUS: Good call. Reservations with a configurable cancellation policy — cancel up to two hours before the window, otherwise you're charged fifty percent.
+
+JAMES: Great. I'll compile all of this into a requirements document. Thanks everyone.
+
+==========================================================================
+END OF TRANSCRIPT

@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+scratch/
+.adk/
+.google-agents-cli/
+session.db
+output/
