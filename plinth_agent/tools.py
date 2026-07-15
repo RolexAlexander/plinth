@@ -207,6 +207,10 @@ async def finalize_package(tool_context: ToolContext) -> dict:
     if candidate_stmt_count == 0 and "statements" in state:
         candidate_stmt_count = len(state.get("statements", []))
 
+    source_provenance = state.get("source_provenance", [])
+    if not source_provenance:
+        source_provenance = ["sample_transcript.txt"]
+
     pkg = RequirementsPackage(
         brief=brief,
         personas=personas,
@@ -217,7 +221,8 @@ async def finalize_package(tool_context: ToolContext) -> dict:
         decisions=decisions,
         generated_at=datetime.now(),
         candidate_statement_count=candidate_stmt_count,
-        source_registry=source_registry
+        source_registry=source_registry,
+        source_provenance=source_provenance
     )
 
     # 5. Run re-indexing and AC uniqueness
@@ -231,6 +236,45 @@ async def finalize_package(tool_context: ToolContext) -> dict:
 
     print("[package_agent] Running grounding checks...")
     validate_source_grounding(pkg, pkg.source_registry, mode="warn")
+
+    # Enforce grounding ratio floor (Fix 2)
+    sourced_requirements = [r for r in pkg.requirements if any(s.origin in REAL_ORIGINS for s in r.source)]
+    if sourced_requirements:
+        confirmed_grounded = [r for r in sourced_requirements if r.status == Status.confirmed]
+        grounding_ratio = len(confirmed_grounded) / len(sourced_requirements)
+        if grounding_ratio < 0.95:
+            from .validation.grounding import GroundingError
+            raise GroundingError(
+                f"grounding check failed: {len(confirmed_grounded)}/{len(sourced_requirements)} "
+                f"confirmed requirements not found in the provided transcript — possible wrong/stale source"
+            )
+
+    # Provenance check (Fix 4)
+    for r in pkg.requirements:
+        for s in r.source:
+            if s.origin in REAL_ORIGINS and s.ref:
+                ref_lower = s.ref.lower()
+                matched = False
+                for prov in pkg.source_provenance:
+                    prov_clean = Path(prov).stem.lower()
+                    if prov_clean in ref_lower or ref_lower in prov_clean:
+                        matched = True
+                        break
+                
+                # Check if the ref mentions other project names when the brief is different
+                if pkg.brief and pkg.brief.project_name:
+                    proj_name = pkg.brief.project_name.lower()
+                    if "spincycle" in ref_lower and proj_name != "spincycle":
+                        matched = False
+                    if "petwell" in ref_lower and proj_name != "petwell":
+                        matched = False
+                
+                if not matched:
+                    raise ValueError(
+                        f"Provenance mismatch: requirement {r.id} cites source reference {s.ref!r} "
+                        f"which does not match current run's source provenance {pkg.source_provenance} "
+                        f"or project name {pkg.brief.project_name if pkg.brief else 'Unknown'}."
+                    )
 
     print("[package_agent] Running transcript coverage validation...")
     validate_coverage(pkg, transcript, pkg.candidate_statement_count)

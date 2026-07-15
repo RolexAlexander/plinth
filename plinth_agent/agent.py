@@ -5,7 +5,11 @@ from google.adk.tools import request_input
 from google.genai import types
 
 from .schemas import IntakeResult, RequirementList, QaReviewFindings, UserStoryList
-from .callbacks import init_state, unpack_intake, ground_requirements, ground_and_check_coverage, process_qa_review_findings
+from .callbacks import (
+    init_state, unpack_intake, ground_requirements, ground_and_check_coverage, 
+    process_qa_review_findings, before_intake_log, before_requirements_log, before_writer_log,
+    auto_resolve_open_questions_in_test
+)
 from .tools import mark_review_passed, finalize_package, resolve_open_questions
 
 def create_intake_agent() -> Agent:
@@ -58,6 +62,7 @@ Identify and extract:
         instruction=instruction,
         output_schema=IntakeResult,
         output_key="intake_result",
+        before_agent_callback=before_intake_log,
         after_agent_callback=unpack_intake,
     )
 
@@ -106,6 +111,7 @@ For each requirement, you must strictly adhere to the following schema constrain
         instruction=instruction,
         output_schema=RequirementList,
         output_key="requirements",
+        before_agent_callback=before_requirements_log,
         after_agent_callback=ground_requirements,
     )
 
@@ -146,6 +152,7 @@ You must strictly adhere to the following requirement rules to ensure Pydantic s
         instruction=instruction,
         output_schema=RequirementList,
         output_key="requirements",
+        before_agent_callback=before_writer_log,
         after_agent_callback=ground_requirements,
     )
 
@@ -277,6 +284,7 @@ First, look at the open questions in the state:
         ),
         instruction=instruction,
         tools=[request_input, resolve_open_questions],
+        before_agent_callback=auto_resolve_open_questions_in_test,
     )
 
 # The root agent that orchestrates the entire requirements discovery pipeline

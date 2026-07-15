@@ -23,10 +23,13 @@ import pytest
 from plinth_agent.agent import root_agent
 
 
+from tests.integration.test_regression import is_api_quota_available
+
+
 @pytest.mark.live
 @pytest.mark.skipif(
-    not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")),
-    reason="Missing Google API credentials; set GOOGLE_API_KEY to run live integration tests."
+    not is_api_quota_available(),
+    reason="Vertex AI API is rate-limited, quota-exhausted, or credentials are not configured."
 )
 def test_agent_stream() -> None:
     """

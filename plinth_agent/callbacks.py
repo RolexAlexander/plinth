@@ -24,35 +24,71 @@ def serialize_state_val(val):
     return val
 
 async def init_state(callback_context: CallbackContext) -> None:
-    """Initializes all required session state keys and seeds the transcript."""
-    print("[callback] Initializing state keys...")
+    """Initializes all required session state keys, resets working state, seeds the transcript, and wipes outputs."""
     state = callback_context.state
-    
-    # Initialize basic state keys
+    if state.get("_initialized"):
+        print("[callback] Session already initialized. Skipping state reset.")
+        return
+        
+    print("[callback] Resetting state keys for a fresh run...")
+    # Initialize basic state keys (always clear them at start of run to avoid cross-project contamination)
     keys = [
         "brief", "personas", "statements", "requirements", "user_stories", 
         "open_questions", "decisions", "domain_entities", "srs_review", 
-        "intake_result", "candidate_statement_count"
+        "intake_result", "candidate_statement_count", "source_registry", "mermaid_diagrams"
     ]
     for key in keys:
-        if key not in state:
-            state[key] = [] if key in ["personas", "statements", "requirements", "user_stories", "open_questions", "decisions", "domain_entities"] else ""
+        state[key] = [] if key in ["personas", "statements", "requirements", "user_stories", "open_questions", "decisions", "domain_entities"] else ""
             
-    # Seed transcript if not already set
-    if not state.get("transcript"):
-        transcript_path = Path("sample_transcript.txt")
-        if not transcript_path.exists():
-            # Try to resolve relative to this file
-            transcript_path = Path(__file__).resolve().parent.parent / "sample_transcript.txt"
-        if transcript_path.exists():
-            try:
-                with open(transcript_path, "r", encoding="utf-8") as f:
-                    state["transcript"] = f.read()
-                print(f"[callback] Successfully seeded transcript from: {transcript_path}")
-            except Exception as e:
-                print(f"[callback] Error loading transcript: {e}")
-        else:
-            print("[callback] Warning: sample_transcript.txt not found.")
+    # Always reload transcript from disk at start of run to ensure fresh content
+    transcript_path = Path("sample_transcript.txt")
+    if not transcript_path.exists():
+        # Try to resolve relative to this file
+        transcript_path = Path(__file__).resolve().parent.parent / "sample_transcript.txt"
+        
+    if transcript_path.exists():
+        try:
+            with open(transcript_path, "r", encoding="utf-8") as f:
+                state["transcript"] = f.read()
+            state["source_provenance"] = [transcript_path.name]
+            print(f"[callback] Fresh run: loaded transcript from: {transcript_path} (length={len(state['transcript'])})")
+        except Exception as e:
+            print(f"[callback] Error loading transcript: {e}")
+    else:
+        print("[callback] Warning: sample_transcript.txt not found.")
+
+    # Wipe output directory at run start (Fix 3)
+    try:
+        from .settings import Settings
+        settings = Settings.load()
+        out_dir = Path(settings.io.output_dir)
+        if out_dir.exists():
+            print(f"[callback] Wiping output directory: {out_dir}")
+            import shutil
+            for item in out_dir.iterdir():
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+    except Exception as e:
+        print(f"[callback] Error wiping output directory: {e}")
+
+    state["_initialized"] = True
+
+async def before_intake_log(callback_context: CallbackContext) -> None:
+    transcript = callback_context.state.get("transcript", "")
+    prefix = transcript[:150].replace("\n", " ")
+    print(f"[TRACE] Intake Agent: transcript length={len(transcript)}, prefix={prefix!r}")
+
+async def before_requirements_log(callback_context: CallbackContext) -> None:
+    transcript = callback_context.state.get("transcript", "")
+    prefix = transcript[:150].replace("\n", " ")
+    print(f"[TRACE] Requirements Agent: transcript length={len(transcript)}, prefix={prefix!r}")
+
+async def before_writer_log(callback_context: CallbackContext) -> None:
+    transcript = callback_context.state.get("transcript", "")
+    prefix = transcript[:150].replace("\n", " ")
+    print(f"[TRACE] SRS Writer Agent: transcript length={len(transcript)}, prefix={prefix!r}")
 
 async def unpack_intake(callback_context: CallbackContext) -> None:
     """Unpacks the IntakeResult output into separate state keys as JSON-serializable dicts."""
@@ -257,4 +293,19 @@ async def process_qa_review_findings(callback_context: CallbackContext) -> None:
 
     state["open_questions"] = serialize_state_val(oq_list)
     print(f"[callback] Processed {len(findings_list)} findings, total open questions in state: {len(oq_list)}")
+    return None
+
+async def auto_resolve_open_questions_in_test(callback_context: CallbackContext) -> None:
+    """Pre-agent callback for elicitation_agent to auto-resolve open questions in tests."""
+    if os.getenv("PLINTH_TEST_AUTO_RESOLVE") == "true":
+        state = callback_context.state
+        oqs = state.get("open_questions") or []
+        if oqs:
+            oq_list = to_pydantic_list(oqs, OpenQuestion)
+            for q in oq_list:
+                if q.status == OpenQuestionStatus.open:
+                    q.status = OpenQuestionStatus.answered
+                    q.answer = f"Auto-resolved answer for test to {q.question}"
+            state["open_questions"] = serialize_state_val(oq_list)
+            print("[callback] Test mode: Auto-resolved all open questions to bypass human gate.")
     return None

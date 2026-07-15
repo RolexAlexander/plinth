@@ -36,11 +36,13 @@ from a2a.types import (
 )
 from requests.exceptions import RequestException
 
+from tests.integration.test_regression import is_api_quota_available
+
 pytestmark = [
     pytest.mark.live,
     pytest.mark.skipif(
-        not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")),
-        reason="Missing Google API credentials; set GOOGLE_API_KEY to run live E2E server tests."
+        not is_api_quota_available(),
+        reason="Vertex AI API is rate-limited, quota-exhausted, or credentials are not configured."
     )
 ]
 
