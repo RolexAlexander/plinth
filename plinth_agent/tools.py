@@ -8,7 +8,7 @@ from google.adk.tools import ToolContext
 from .models import (
     RequirementsPackage, ProjectBrief, Persona, DomainEntity, UserStory,
     Requirement, OpenQuestion, Decision, SourceRegistry, SourceDocument,
-    SourceOrigin, Status, DefaultIfDeferred, OpenQuestionStatus
+    SourceOrigin, Status, DefaultIfDeferred, OpenQuestionStatus, REAL_ORIGINS
 )
 
 from .validation.package_validators import validate_package_integrity
