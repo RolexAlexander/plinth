@@ -40,22 +40,27 @@ async def init_state(callback_context: CallbackContext) -> None:
     for key in keys:
         state[key] = [] if key in ["personas", "statements", "requirements", "user_stories", "open_questions", "decisions", "domain_entities"] else ""
             
-    # Always reload transcript from disk at start of run to ensure fresh content
-    transcript_path = Path("sample_transcript.txt")
-    if not transcript_path.exists():
-        # Try to resolve relative to this file
-        transcript_path = Path(__file__).resolve().parent.parent / "sample_transcript.txt"
-        
-    if transcript_path.exists():
-        try:
-            with open(transcript_path, "r", encoding="utf-8") as f:
-                state["transcript"] = f.read()
-            state["source_provenance"] = [transcript_path.name]
-            print(f"[callback] Fresh run: loaded transcript from: {transcript_path} (length={len(state['transcript'])})")
-        except Exception as e:
-            print(f"[callback] Error loading transcript: {e}")
+    # Seed transcript from disk only if not already present in state
+    if not state.get("transcript"):
+        transcript_path = Path("sample_transcript.txt")
+        if not transcript_path.exists():
+            # Try to resolve relative to this file
+            transcript_path = Path(__file__).resolve().parent.parent / "sample_transcript.txt"
+            
+        if transcript_path.exists():
+            try:
+                with open(transcript_path, "r", encoding="utf-8") as f:
+                    state["transcript"] = f.read()
+                state["source_provenance"] = [transcript_path.name]
+                print(f"[callback] Fresh run: loaded transcript from disk: {transcript_path} (length={len(state['transcript'])})")
+            except Exception as e:
+                print(f"[callback] Error loading transcript: {e}")
+        else:
+            print("[callback] Warning: sample_transcript.txt not found.")
     else:
-        print("[callback] Warning: sample_transcript.txt not found.")
+        print(f"[callback] Transcript already present in state (length={len(state['transcript'])}). Skipping seeding from disk.")
+        if "source_provenance" not in state or not state["source_provenance"]:
+            state["source_provenance"] = ["transcript"]
 
     # Wipe output directory at run start (Fix 3)
     try:
