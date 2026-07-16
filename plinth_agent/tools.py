@@ -367,11 +367,24 @@ def resolve_open_questions(answers: dict[str, str], tool_context: ToolContext) -
     from .callbacks import serialize_state_val
     from .tools import to_pydantic_list
 
+    if isinstance(oqs, dict):
+        if "open_questions" in oqs:
+            oqs = oqs["open_questions"]
+        elif "requirements" in oqs:  # Fallback just in case
+            oqs = oqs["requirements"]
+        else:
+            oqs = []
+            
     oq_list = to_pydantic_list(oqs, OpenQuestion)
     resolved_count = 0
     
     # Track decisions
     decisions = state.get("decisions") or []
+    if isinstance(decisions, dict):
+        if "decisions" in decisions:
+            decisions = decisions["decisions"]
+        else:
+            decisions = []
     dec_list = to_pydantic_list(decisions, Decision)
     next_dec_num = 1
     for d in dec_list:
@@ -381,6 +394,11 @@ def resolve_open_questions(answers: dict[str, str], tool_context: ToolContext) -
             
     # We also want to promote the affected requirements if they were blocked
     reqs = state.get("requirements") or []
+    if isinstance(reqs, dict):
+        if "requirements" in reqs:
+            reqs = reqs["requirements"]
+        else:
+            reqs = []
     req_list = to_pydantic_list(reqs, Requirement)
 
     for qid, ans in answers.items():
