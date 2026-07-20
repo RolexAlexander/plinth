@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/logo.png" alt="Plinth Logo" width="220" />
+
 # 🏛️ Plinth
 
 **Turns discovery into a foundation downstream agents can build on.**
