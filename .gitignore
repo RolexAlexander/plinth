@@ -54,5 +54,10 @@ uv.lock
 *.log
 logs/
 
+# ADK runtime files
+.adk/
+**/.adk/
+.google-agents-cli/
+
 # Scratch directory
 scratch/
