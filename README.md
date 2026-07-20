@@ -1,6 +1,13 @@
-# Plinth — Requirements Discovery Agent (Google ADK Port)
+<div align="center">
 
-Plinth is a multi-agent **Requirements Discovery** system that turns a raw stakeholder transcript into a grounded, machine-consumable requirements package for downstream build agents. It ingests discovery inputs (transcripts, intake forms) and produces structured specifications, user stories, personas, domain models, and traceability matrices.
+<img src="docs/logo.png" alt="Plinth Logo" width="220" />
+
+# 🏛️ Plinth — Requirements Discovery Agent (Google ADK Port)
+
+**Turns discovery into a foundation downstream agents can build on.**
+
+</div>
+
 
 ## The D differentiator: Anti-Hallucination & Provenance Integrity
 Plinth's core guarantee is its strict **anti-hallucination and provenance-integrity control**:
@@ -82,6 +89,8 @@ A typical run against the `sample_transcript.txt` stakeholder interview produces
 
 ---
 
-## 5. Architecture Diagram
-![Architecture Diagram](docs/architecture.png)
-*(Diagram to be updated in a future release)*
+## 5. Logo & Branding
+<div align="center">
+<img src="docs/logo.png" alt="Plinth Logo" width="400" />
+</div>
+

@@ -1,9 +1,16 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from google.adk.agents import Agent, SequentialAgent, LoopAgent
 from google.adk.apps import App, ResumabilityConfig
 from google.adk.models import Gemini
+from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools import request_input
 from google.genai import types
 
+from .settings import Settings
 from .schemas import IntakeResult, RequirementList, QaReviewFindings, UserStoryList
 from .callbacks import (
     init_state, unpack_intake, ground_requirements, ground_and_check_coverage, 
@@ -11,6 +18,30 @@ from .callbacks import (
     auto_resolve_open_questions_in_test
 )
 from .tools import mark_review_passed, finalize_package, resolve_open_questions
+
+def get_adk_model(model_name: str | None = None):
+    """Factory function to instantiate the ADK model (Gemini or LiteLlm/Qwen)
+    based on Settings or environment configuration.
+    """
+    settings = Settings.load()
+    target_model = model_name or os.getenv("MODEL_NAME") or settings.llm.default_model
+
+    # Propagate Qwen / DashScope keys & endpoint to OpenAI / LiteLLM defaults
+    qwen_key = os.getenv("QWEN_API_KEY") or os.getenv("DASHSCOPE_API_KEY")
+    qwen_base = os.getenv("QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
+    if qwen_key:
+        os.environ.setdefault("OPENAI_API_KEY", qwen_key)
+        os.environ.setdefault("OPENAI_API_BASE", qwen_base)
+        os.environ.setdefault("DASHSCOPE_API_KEY", qwen_key)
+
+    if target_model.startswith("gemini/") or target_model.startswith("gemini-"):
+        pure_name = target_model.replace("gemini/", "")
+        return Gemini(
+            model=pure_name,
+            retry_options=types.HttpRetryOptions(attempts=3),
+        )
+    else:
+        return LiteLlm(model=target_model)
 
 def create_intake_agent() -> Agent:
     """Creates the Discovery Intake Analyst agent.
@@ -55,10 +86,7 @@ Identify and extract:
 """
     return Agent(
         name="intake_agent",
-        model=Gemini(
-            model="gemini-2.5-flash",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         output_schema=IntakeResult,
         output_key="intake_result",
@@ -104,10 +132,7 @@ For each requirement, you must strictly adhere to the following schema constrain
 """
     return Agent(
         name="requirements_agent",
-        model=Gemini(
-            model="gemini-2.5-pro",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         output_schema=RequirementList,
         output_key="requirements",
@@ -145,10 +170,7 @@ You must strictly adhere to the following requirement rules to ensure Pydantic s
 """
     return Agent(
         name="srs_writer",
-        model=Gemini(
-            model="gemini-2.5-flash",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         output_schema=RequirementList,
         output_key="requirements",
@@ -176,10 +198,7 @@ Otherwise, output the QA findings list.
 """
     return Agent(
         name="qa_critic",
-        model=Gemini(
-            model="gemini-2.5-pro",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         output_schema=QaReviewFindings,
         output_key="srs_review",
@@ -220,10 +239,7 @@ Rules:
 """
     return Agent(
         name="user_story_agent",
-        model=Gemini(
-            model="gemini-2.5-flash",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         output_schema=UserStoryList,
         output_key="user_stories",
@@ -239,10 +255,7 @@ def create_package_agent() -> Agent:
     instruction = """You are the packaging agent. Your only task is to call the finalize_package tool to compile the requirements package, run validators, and write the output files to disk. You MUST execute this tool call immediately."""
     return Agent(
         name="package_agent",
-        model=Gemini(
-            model="gemini-2.5-flash",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         tools=[finalize_package],
         include_contents="none",
@@ -278,10 +291,7 @@ First, look at the open questions in the state:
 """
     return Agent(
         name="elicitation_agent",
-        model=Gemini(
-            model="gemini-2.5-pro",
-            retry_options=types.HttpRetryOptions(attempts=3),
-        ),
+        model=get_adk_model(),
         instruction=instruction,
         tools=[request_input, resolve_open_questions],
         before_agent_callback=auto_resolve_open_questions_in_test,
