@@ -83,6 +83,8 @@ Identify and extract:
    - default_if_deferred must be exactly one of: 'adopt_assumption', 'leave_open', 'drop_scope' (strictly lowercase).
    - If you mark an OpenQuestion as blocking (blocking is True), you MUST provide a detailed `blocking_rationale` explaining why it blocks the affected requirements.
    - affects must be empty or contain valid Requirement IDs (matching pattern REQ-\\d+), NEVER Persona IDs.
+
+   Ensure your output is returned in valid JSON format.
 """
     return Agent(
         name="intake_agent",
@@ -129,6 +131,8 @@ For each requirement, you must strictly adhere to the following schema constrain
 - Acceptance criterion IDs must match the pattern AC-\\d+-[a-z] (strictly AC-\\d+-[a-z], e.g. AC-001-a).
 - Define dependencies using 'depends_on' (list of REQ IDs).
 - Select its priority: must, should, could, wont (strictly lowercase MoSCoW values).
+
+  Ensure your output is returned in valid JSON format.
 """
     return Agent(
         name="requirements_agent",
@@ -167,6 +171,8 @@ You must strictly adhere to the following requirement rules to ensure Pydantic s
 3. Non-Functional Metrics (R2): For every non-functional requirement (type is 'non_functional'), you MUST define a quantified 'metric' containing dimension (e.g. latency, availability) and target (e.g. 'p95 < 2s'). The target must NOT be empty.
 4. Acceptance Criteria (R3): For every functional requirement (type is 'functional'), you MUST define at least one acceptance criterion in the `acceptance_criteria` list, even if its status is initially 'open' or 'assumed'.
 5. Only confirmed and assumed requirements can be finalized; do not include unconfirmed inferences or open questions in the requirements list.
+
+Ensure your output is returned in valid JSON format.
 """
     return Agent(
         name="srs_writer",
@@ -195,6 +201,8 @@ Here are the current requirements:
 Identify ambiguities, contradictions, missing edge cases, or acceptance criteria that do not properly test their requirement statements.
 If there are NO remaining material objections or blockages, you MUST call the mark_review_passed tool to conclude the review and exit the loop.
 Otherwise, output the QA findings list.
+
+Ensure your output is returned in valid JSON format.
 """
     return Agent(
         name="qa_critic",
@@ -236,6 +244,8 @@ Rules:
 7. Story priority should inherit from the highest-priority requirement it covers.
 8. Use the personas to inform the `as_a` field — use the persona's role, not their name.
 9. Do NOT invent new requirements. Only organize existing requirements into user stories. You must strictly use the requirement IDs exactly as defined in the Current Requirements list.
+
+Ensure your output is returned in valid JSON format.
 """
     return Agent(
         name="user_story_agent",

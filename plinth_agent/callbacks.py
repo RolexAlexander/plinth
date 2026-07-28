@@ -40,8 +40,22 @@ async def init_state(callback_context: CallbackContext) -> None:
     for key in keys:
         state[key] = [] if key in ["personas", "statements", "requirements", "user_stories", "open_questions", "decisions", "domain_entities"] else ""
             
-    # Seed transcript from disk only if not already present in state
-    if not state.get("transcript"):
+    # Check if there is user-provided input message in the UI
+    user_input_text = ""
+    try:
+        inv_ctx = callback_context.get_invocation_context()
+        if inv_ctx and inv_ctx.user_content and inv_ctx.user_content.parts:
+            parts = [p.text for p in inv_ctx.user_content.parts if getattr(p, "text", None)]
+            user_input_text = "".join(parts).strip()
+    except Exception as e:
+        print(f"[callback] Error checking user input: {e}")
+
+    # Seed transcript: prioritize user UI input, then fall back to disk or pre-existing state
+    if user_input_text:
+        state["transcript"] = user_input_text
+        state["source_provenance"] = ["ui_input"]
+        print(f"[callback] Fresh run: loaded transcript from user UI input (length={len(state['transcript'])})")
+    elif not state.get("transcript"):
         transcript_path = Path("sample_transcript.txt")
         if not transcript_path.exists():
             # Try to resolve relative to this file
