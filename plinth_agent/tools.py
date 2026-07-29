@@ -257,7 +257,7 @@ async def finalize_package(tool_context: ToolContext) -> dict:
                 matched = False
                 for prov in pkg.source_provenance:
                     prov_clean = Path(prov).stem.lower()
-                    if prov_clean in ref_lower or ref_lower in prov_clean:
+                    if prov_clean in ["ui_input", "transcript"] or prov_clean in ref_lower or ref_lower in prov_clean:
                         matched = True
                         break
                 

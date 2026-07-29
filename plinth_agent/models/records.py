@@ -27,7 +27,7 @@ class AcceptanceCriterion(BaseModel):
     def clean_id(cls, v: Any) -> Any:
         if isinstance(v, dict) and "id" in v:
             orig_id = str(v["id"])
-            match = re.search(r"(\d+)-([a-z])$", orig_id)
+            match = re.search(r"(\d+)-([a-z])", orig_id)
             if match:
                 v["id"] = f"AC-{match.group(1)}-{match.group(2)}"
         return v
