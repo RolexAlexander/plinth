@@ -112,8 +112,8 @@ def check_requirements_coverage(pkg: RequirementsPackage, transcript: str, candi
         for r in pkg.requirements
     )
     
-    # Secondary signal: topic coverage with lemmatized matching
-    salient_topics = [t for t in _FALLBACK_TOPICS if t in transcript_lower]
+    is_spincycle = "spincycle" in transcript_lower
+    salient_topics = [t for t in _FALLBACK_TOPICS if t in transcript_lower] if is_spincycle else []
     covered_topics = [t for t in salient_topics if _lemmatized_match(t, reqs_text)]
     uncovered_topics = [t for t in salient_topics if t not in covered_topics]
     
