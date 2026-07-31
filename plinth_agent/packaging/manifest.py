@@ -45,7 +45,8 @@ def generate_handoff_manifest(pkg: RequirementsPackage, orphan_check: str = "war
         "no_dangling_references",
         "has_user_stories",
         "has_confirmed_requirements",
-        "has_satisfactory_coverage"
+        "has_satisfactory_coverage",
+        "has_domain_model"
     ]
     if orphan_check == "fail":
         blocking_dor_keys.append("no_orphan_requirements")

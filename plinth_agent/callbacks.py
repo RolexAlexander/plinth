@@ -8,7 +8,7 @@ from .models import (
     DefaultIfDeferred
 )
 from .validation.grounding import check_confirmed_grounding, _norm
-from .schemas import RequirementList, UserStoryList, QaReviewFindings, QAFinding
+from .schemas import RequirementList, UserStoryList, QaReviewFindings, QAFinding, DomainEntityList, MermaidDiagramList
 from .tools import to_pydantic_list
 
 def serialize_state_val(val):
@@ -126,6 +126,9 @@ async def unpack_intake(callback_context: CallbackContext) -> None:
             callback_context.state["statements"] = serialize_state_val(res.get("statements", []))
             callback_context.state["open_questions"] = serialize_state_val(res.get("open_questions", []))
             callback_context.state["candidate_statement_count"] = len(res.get("statements", []))
+    
+    check_stage_emptiness_warning("personas", "Persona Building (Intake)", callback_context)
+    check_stage_emptiness_warning("statements", "Statement Extraction (Intake)", callback_context)
     return None
 
 async def ground_requirements(callback_context: CallbackContext) -> None:
@@ -208,6 +211,7 @@ async def ground_requirements(callback_context: CallbackContext) -> None:
     
     # Store list of Requirements in state (JSON-serialized)
     callback_context.state["requirements"] = serialize_state_val(req_list.requirements)
+    check_stage_emptiness_warning("requirements", "Requirements Generation/Refinement", callback_context)
     return None
 
 async def ground_and_check_coverage(callback_context: CallbackContext) -> None:
@@ -261,6 +265,7 @@ async def ground_and_check_coverage(callback_context: CallbackContext) -> None:
 
     # Store list of UserStories in state (JSON-serialized)
     callback_context.state["user_stories"] = serialize_state_val(stories.user_stories)
+    check_stage_emptiness_warning("user_stories", "User Story Writer", callback_context)
     return None
 
 async def process_qa_review_findings(callback_context: CallbackContext) -> None:
@@ -328,3 +333,35 @@ async def auto_resolve_open_questions_in_test(callback_context: CallbackContext)
             state["open_questions"] = serialize_state_val(oq_list)
             print("[callback] Test mode: Auto-resolved all open questions to bypass human gate.")
     return None
+
+def check_stage_emptiness_warning(state_key: str, display_name: str, callback_context: CallbackContext) -> None:
+    val = callback_context.state.get(state_key)
+    is_empty = False
+    if not val:
+        is_empty = True
+    elif isinstance(val, list) and len(val) == 0:
+        is_empty = True
+    elif isinstance(val, dict) and len(val) == 0:
+        is_empty = True
+    elif hasattr(val, "__len__") and len(val) == 0:
+        is_empty = True
+        
+    if is_empty:
+        transcript = callback_context.state.get("transcript", "")
+        if transcript and len(transcript.strip()) > 0:
+            print(f"\n⚠️  [WARNING] Stage '{display_name}' produced an EMPTY result under state key '{state_key}', despite having non-empty transcript input! Please verify model generation.\n")
+
+async def check_domain_model_emptiness(callback_context: CallbackContext) -> None:
+    check_stage_emptiness_warning("domain_entities", "Domain Modeling", callback_context)
+
+async def check_diagram_emptiness(callback_context: CallbackContext) -> None:
+    # Ensure raw output is serialized properly into state dictionary
+    raw_diagrams = callback_context.state.get("mermaid_diagrams")
+    if raw_diagrams:
+        if hasattr(raw_diagrams, "use_case_diagram"):
+            callback_context.state["mermaid_diagrams"] = {
+                "use_case": getattr(raw_diagrams, "use_case_diagram", ""),
+                "sequence": getattr(raw_diagrams, "sequence_diagram", ""),
+                "activity": getattr(raw_diagrams, "activity_diagram", "")
+            }
+    check_stage_emptiness_warning("mermaid_diagrams", "UML Diagram Authoring", callback_context)

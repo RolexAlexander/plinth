@@ -288,7 +288,17 @@ async def finalize_package(tool_context: ToolContext) -> dict:
     write_package_to_disk(pkg, out_dir, orphan_check=settings.validation.orphan_check)
 
     # Write UML diagrams if present in state
-    mermaid_diagrams = state.get("mermaid_diagrams", {})
+    mermaid_diagrams_raw = state.get("mermaid_diagrams", {})
+    mermaid_diagrams = {}
+    if mermaid_diagrams_raw:
+        if isinstance(mermaid_diagrams_raw, dict):
+            mermaid_diagrams = mermaid_diagrams_raw
+        elif hasattr(mermaid_diagrams_raw, "use_case_diagram"):
+            mermaid_diagrams = {
+                "use_case": getattr(mermaid_diagrams_raw, "use_case_diagram", ""),
+                "sequence": getattr(mermaid_diagrams_raw, "sequence_diagram", ""),
+                "activity": getattr(mermaid_diagrams_raw, "activity_diagram", "")
+            }
     if mermaid_diagrams:
         uml_dir = Path(out_dir) / "uml"
         uml_dir.mkdir(parents=True, exist_ok=True)

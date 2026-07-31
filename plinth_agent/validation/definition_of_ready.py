@@ -45,4 +45,10 @@ def compute_definition_of_ready(pkg: RequirementsPackage, orphan_check: str = "w
         "has_user_stories": (len(pkg.requirements) == 0) or (len(pkg.user_stories) > 0),
         "has_confirmed_requirements": any(r.status == Status.confirmed for r in pkg.requirements),
         "has_satisfactory_coverage": has_satisfactory_coverage,
+        "has_domain_model": (
+            len(pkg.domain_entities) > 0
+            if any(r.type == RequirementType.functional and r.status == Status.confirmed
+                   for r in pkg.requirements)
+            else True
+        ),
     }

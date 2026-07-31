@@ -11,11 +11,11 @@ from google.adk.tools import request_input
 from google.genai import types
 
 from .settings import Settings
-from .schemas import IntakeResult, RequirementList, QaReviewFindings, UserStoryList
+from .schemas import IntakeResult, RequirementList, QaReviewFindings, UserStoryList, DomainEntityList, MermaidDiagramList
 from .callbacks import (
     init_state, unpack_intake, ground_requirements, ground_and_check_coverage, 
     process_qa_review_findings, before_intake_log, before_requirements_log, before_writer_log,
-    auto_resolve_open_questions_in_test
+    auto_resolve_open_questions_in_test, check_domain_model_emptiness, check_diagram_emptiness
 )
 from .tools import mark_review_passed, finalize_package, resolve_open_questions
 
@@ -257,6 +257,88 @@ Ensure your output is returned in valid JSON format.
         include_contents="none",
     )
 
+def create_domain_modeler_agent(model_name: str | None = None) -> Agent:
+    """Creates the Domain Modeler agent.
+    
+    Produces a field-level domain model (entities, attributes, and relationships)
+    from confirmed requirements and raw transcript.
+    """
+    target_model = get_adk_model(model_name)
+    instruction = """You are a Domain and System Modeler.
+Your goal is to produce a field-level structured domain model (entities, attributes, relationships) from confirmed requirements.
+Downstream systems generate database schema from your JSON, not from diagrams, so you are precise about types, nullability, and cardinality. Diagrams are rendered from your model by code.
+
+Based on the raw discovery transcript:
+---
+{transcript}
+---
+
+And the current finalized requirements:
+---
+{requirements}
+---
+
+Produce a field-level domain model (entities, attributes, and relationships) from the confirmed requirements.
+Refer to the original stakeholder transcript to ensure the model aligns with real stakeholder intent and vocabulary.
+
+For each entity:
+- ID in pattern ENT-<Name> (e.g. ENT-User).
+- Attributes (name, type, nullability).
+- Relationships (to another entity ID, kind, and optional via attribute).
+
+Be extremely precise because downstream systems generate database schemas from your domain model.
+Ensure your output is returned in valid JSON format.
+"""
+    return Agent(
+        name="domain_modeler",
+        model=target_model,
+        instruction=instruction,
+        output_schema=DomainEntityList,
+        output_key="domain_entities",
+        after_agent_callback=check_domain_model_emptiness,
+    )
+
+def create_diagram_agent(model_name: str | None = None) -> Agent:
+    """Creates the UML Diagram agent.
+    
+    Authors human-facing Mermaid diagrams (sequence, activity, or use-case diagram strings)
+    for the key system workflows based on the stakeholder transcript, requirements, and domain model.
+    """
+    target_model = get_adk_model(model_name)
+    instruction = """You are a UML Diagram Author.
+Your goal is to author human-facing Mermaid diagrams (use-case, sequence, activity) for key flows; ensure valid syntax.
+Your diagrams are aids for humans. The class/domain diagram is generated from the domain model, not by you; you cover the behavioral diagrams. You never introduce entities the domain model doesn't contain.
+
+Create human-facing Mermaid diagrams (sequence, activity, or use-case diagram strings) for the key system workflows based on the stakeholder transcript, the requirements, and the domain model.
+
+Stakeholder Transcript:
+---
+{transcript}
+---
+
+Current finalized requirements:
+---
+{requirements}
+---
+
+Domain model:
+---
+{domain_entities}
+---
+
+Do not author a class diagram (as it is generated automatically from the domain model).
+Ensure all diagrams have valid Mermaid syntax and do not introduce entities that are not in the domain model.
+Ensure your output is returned in valid JSON format.
+"""
+    return Agent(
+        name="uml_architect",
+        model=target_model,
+        instruction=instruction,
+        output_schema=MermaidDiagramList,
+        output_key="mermaid_diagrams",
+        after_agent_callback=check_diagram_emptiness,
+    )
+
 def create_package_agent() -> Agent:
     """Creates the final Packaging agent.
     
@@ -315,6 +397,8 @@ root_agent = SequentialAgent(
         create_requirements_agent(),
         create_authoring_loop(),
         create_elicitation_agent(),
+        create_domain_modeler_agent(),
+        create_diagram_agent(),
         create_user_story_agent(),
         create_package_agent(),
     ],
