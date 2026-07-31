@@ -334,34 +334,87 @@ async def auto_resolve_open_questions_in_test(callback_context: CallbackContext)
             print("[callback] Test mode: Auto-resolved all open questions to bypass human gate.")
     return None
 
-def check_stage_emptiness_warning(state_key: str, display_name: str, callback_context: CallbackContext) -> None:
+def log_stage_output_count(state_key: str, display_name: str, callback_context: CallbackContext) -> None:
     val = callback_context.state.get(state_key)
-    is_empty = False
-    if not val:
-        is_empty = True
-    elif isinstance(val, list) and len(val) == 0:
-        is_empty = True
-    elif isinstance(val, dict) and len(val) == 0:
-        is_empty = True
-    elif hasattr(val, "__len__") and len(val) == 0:
-        is_empty = True
-        
-    if is_empty:
+    count = 0
+    if isinstance(val, list):
+        count = len(val)
+    elif isinstance(val, dict):
+        if state_key == "mermaid_diagrams":
+            count = sum(1 for v in val.values() if v and str(v).strip())
+        else:
+            count = len(val)
+    elif hasattr(val, "__len__"):
+        count = len(val)
+    elif val:
+        # If it's a Pydantic object
+        if hasattr(val, "domain_entities"):
+            count = len(val.domain_entities)
+        elif hasattr(val, "user_stories"):
+            count = len(val.user_stories)
+        elif hasattr(val, "requirements"):
+            count = len(val.requirements)
+        elif hasattr(val, "use_case_diagram"):
+            diagrams = [
+                getattr(val, "use_case_diagram", ""),
+                getattr(val, "sequence_diagram", ""),
+                getattr(val, "activity_diagram", "")
+            ]
+            count = sum(1 for d in diagrams if d and str(d).strip())
+        else:
+            count = 1
+            
+    print(f"\n[STAGE LOG] Stage '{display_name}' output count for '{state_key}': {count}")
+    
+    if count == 0:
         transcript = callback_context.state.get("transcript", "")
         if transcript and len(transcript.strip()) > 0:
             print(f"\n⚠️  [WARNING] Stage '{display_name}' produced an EMPTY result under state key '{state_key}', despite having non-empty transcript input! Please verify model generation.\n")
 
+def check_stage_emptiness_warning(state_key: str, display_name: str, callback_context: CallbackContext) -> None:
+    log_stage_output_count(state_key, display_name, callback_context)
+
+async def before_domain_modeler_log(callback_context: CallbackContext) -> None:
+    transcript = callback_context.state.get("transcript", "")
+    requirements = callback_context.state.get("requirements", [])
+    print(f"\n[TRACE] Domain Modeler Agent: transcript length={len(transcript)}, requirements count={len(requirements)}")
+
+async def before_diagram_log(callback_context: CallbackContext) -> None:
+    transcript = callback_context.state.get("transcript", "")
+    requirements = callback_context.state.get("requirements", [])
+    domain_entities = callback_context.state.get("domain_entities", [])
+    print(f"\n[TRACE] Diagram Agent: transcript length={len(transcript)}, requirements count={len(requirements)}, domain_entities count={len(domain_entities)}")
+
 async def check_domain_model_emptiness(callback_context: CallbackContext) -> None:
-    check_stage_emptiness_warning("domain_entities", "Domain Modeling", callback_context)
+    raw_entities = callback_context.state.get("domain_entities")
+    print(f"\n[TRACE] Domain Modeler raw output in state: {raw_entities}")
+    if raw_entities:
+        from .schemas import DomainEntityList
+        if isinstance(raw_entities, DomainEntityList):
+            callback_context.state["domain_entities"] = serialize_state_val(raw_entities.domain_entities)
+        elif isinstance(raw_entities, dict) and "domain_entities" in raw_entities:
+            callback_context.state["domain_entities"] = serialize_state_val(raw_entities["domain_entities"])
+        elif hasattr(raw_entities, "domain_entities"):
+            callback_context.state["domain_entities"] = serialize_state_val(raw_entities.domain_entities)
+            
+    log_stage_output_count("domain_entities", "Domain Modeling", callback_context)
 
 async def check_diagram_emptiness(callback_context: CallbackContext) -> None:
-    # Ensure raw output is serialized properly into state dictionary
     raw_diagrams = callback_context.state.get("mermaid_diagrams")
+    print(f"\n[TRACE] Diagram Agent raw output in state: {raw_diagrams}")
     if raw_diagrams:
-        if hasattr(raw_diagrams, "use_case_diagram"):
+        from .schemas import MermaidDiagramList
+        if isinstance(raw_diagrams, MermaidDiagramList):
             callback_context.state["mermaid_diagrams"] = {
                 "use_case": getattr(raw_diagrams, "use_case_diagram", ""),
                 "sequence": getattr(raw_diagrams, "sequence_diagram", ""),
                 "activity": getattr(raw_diagrams, "activity_diagram", "")
             }
-    check_stage_emptiness_warning("mermaid_diagrams", "UML Diagram Authoring", callback_context)
+        elif hasattr(raw_diagrams, "use_case_diagram"):
+            callback_context.state["mermaid_diagrams"] = {
+                "use_case": getattr(raw_diagrams, "use_case_diagram", ""),
+                "sequence": getattr(raw_diagrams, "sequence_diagram", ""),
+                "activity": getattr(raw_diagrams, "activity_diagram", "")
+            }
+            
+    log_stage_output_count("mermaid_diagrams", "UML Diagram Authoring", callback_context)

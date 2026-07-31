@@ -15,7 +15,8 @@ from .schemas import IntakeResult, RequirementList, QaReviewFindings, UserStoryL
 from .callbacks import (
     init_state, unpack_intake, ground_requirements, ground_and_check_coverage, 
     process_qa_review_findings, before_intake_log, before_requirements_log, before_writer_log,
-    auto_resolve_open_questions_in_test, check_domain_model_emptiness, check_diagram_emptiness
+    auto_resolve_open_questions_in_test, check_domain_model_emptiness, check_diagram_emptiness,
+    before_domain_modeler_log, before_diagram_log
 )
 from .tools import mark_review_passed, finalize_package, resolve_open_questions
 
@@ -295,6 +296,7 @@ Ensure your output is returned in valid JSON format.
         instruction=instruction,
         output_schema=DomainEntityList,
         output_key="domain_entities",
+        before_agent_callback=before_domain_modeler_log,
         after_agent_callback=check_domain_model_emptiness,
     )
 
@@ -336,6 +338,7 @@ Ensure your output is returned in valid JSON format.
         instruction=instruction,
         output_schema=MermaidDiagramList,
         output_key="mermaid_diagrams",
+        before_agent_callback=before_diagram_log,
         after_agent_callback=check_diagram_emptiness,
     )
 

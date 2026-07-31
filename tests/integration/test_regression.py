@@ -48,21 +48,14 @@ JOHN: Three things kill us. First, check-in delays — we lose about twelve perc
 """
 
 def is_api_quota_available() -> bool:
+    if os.getenv("PLINTH_RUN_LIVE_TESTS") != "true":
+        return False
     if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_GENAI_USE_VERTEXAI") == "True"):
         return False
     try:
-        import asyncio
         from google.adk.models import Gemini
         m = Gemini(model="gemini-2.5-flash")
-        async def ping():
-            async for chunk in m.generate_content_async("ping"):
-                break
-        
-        loop = asyncio.new_event_loop()
-        try:
-            loop.run_until_complete(asyncio.wait_for(ping(), timeout=5.0))
-        finally:
-            loop.close()
+        resp = m.api_client.models.generate_content(model="gemini-2.5-flash", contents="ping")
         return True
     except Exception as e:
         print(f"\n[SKIP CHECK] Live API call failed (likely 429 rate limit or missing auth): {e}")
