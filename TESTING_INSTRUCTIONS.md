@@ -1,13 +1,14 @@
-# 🧪 Testing & Verification Instructions
+# 🧪 Testing & Verification Instructions (Google ADK / Gemini Build)
 
 ## 1. Prerequisites & Installation
 
 Ensure Python `3.11+` and [`uv`](https://docs.astral.sh/uv/) (or standard `pip`) are installed.
 
 ```bash
-# Clone the repository
+# Clone the repository and checkout the adk-build branch
 git clone https://github.com/RolexAlexander/plinth.git
 cd plinth
+git checkout adk-build
 
 # Install dependencies with uv
 uv sync
@@ -20,20 +21,12 @@ uv sync
 Create a `.env` file in the project root (or copy `.env.example`):
 
 ```bash
-# Qwen / DashScope Configuration
-QWEN_API_KEY=your_qwen_api_key_here
-QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-
-# OpenAI-compatible mapping for LiteLLM
-OPENAI_API_KEY=your_qwen_api_key_here
-OPENAI_API_BASE=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-DASHSCOPE_API_KEY=your_qwen_api_key_here
-
-# Model Choice
-MODEL_NAME=openai/qwen3.7-plus
+# Gemini API Key Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_GENAI_USE_VERTEXAI=FALSE
 ```
 
-*(Note: The system automatically reads `config.yaml` configured for `openai/qwen3.7-plus`)*
+*(Note: The system automatically reads `config.yaml` configured for `gemini/gemini-2.5-pro` and `gemini/gemini-2.5-flash`)*
 
 ---
 
@@ -52,16 +45,11 @@ Run the pipeline against the default discovery transcript (`sample_transcript.tx
 agents-cli run "Generate requirements for SpinCycle"
 ```
 
-### Option C: Running via CrewAI Kickoff (CrewAI Flow Mode)
-```bash
-uv run kickoff
-```
-
 ---
 
 ## 4. Automated Unit & Validation Tests
 
-Run the deterministic test suite (validates anti-hallucination rules, grounding logic, and schema constraints):
+Run the deterministic test suite:
 
 ```bash
 uv run pytest tests/unit

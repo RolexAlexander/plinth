@@ -2,194 +2,95 @@
 
 <img src="docs/logo.png" alt="Plinth Logo" width="220" />
 
-# 🏛️ Plinth
+# 🏛️ Plinth — Requirements Discovery Agent (Google ADK Port)
 
 **Turns discovery into a foundation downstream agents can build on.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://python.org)
-[![CrewAI](https://img.shields.io/badge/Built%20with-CrewAI-FF6B35.svg)](https://crewai.com)
-
 </div>
 
----
 
-Plinth is an AI-powered **requirements discovery engine** that transforms raw stakeholder conversations into structured, validated Software Requirements Specifications (SRS). Feed it a transcript — get back a complete requirements package with traceability, domain models, and UML diagrams.
+## The D differentiator: Anti-Hallucination & Provenance Integrity
+Plinth's core guarantee is its strict **anti-hallucination and provenance-integrity control**:
+* A requirement can only be promoted to `confirmed` status if its cited stakeholder quote matches a **verbatim substring** in the raw stakeholder transcript.
+* Synthetic or inferred requirements are demoted to `assumed` or `open` status and can never be promoted without human/verbatim grounding.
+* The final requirements package is blocked from downstream execution (`ready_for` is left empty `[]`) until all definition of ready rules and grounding constraints are satisfied.
 
-## ✨ Features
-
-- **Structured extraction** — Parses stakeholder transcripts into typed requirements, personas, user stories, and domain entities
-- **Actor–Critic refinement** — Multi-round deep authoring loop with QA review and client-proxy validation
-- **Human-in-the-loop gates** — Blocking open questions surface for human approval before proceeding
-- **Deterministic validation** — Pydantic-enforced rules (R1–R5) ensure no requirement is `confirmed` without a real human source
-- **Full traceability** — Cross-reference matrix linking requirements ↔ user stories ↔ domain entities
-- **UML generation** — Auto-generated use case, sequence, and activity diagrams in Mermaid syntax
-- **Handoff manifest** — Machine-readable readiness report for downstream consumers
-
-## 🏗️ Architecture
-
-```
-Transcript → Ingest → Extract Skeleton → Elicitation → Gate 1 (Scope)
-                                                            ↓
-                                          Deep Authoring (Actor → Critic loop)
-                                                            ↓
-                                                      Gate 2 (Signoff)
-                                                            ↓
-                                                    Package & Export
-```
-
-Plinth runs as a **CrewAI Flow** orchestrating specialized agent crews:
-
-| Phase | Agents | Purpose |
-|---|---|---|
-| **Discovery** | Senior Requirements Analyst | Extract initial requirements skeleton from transcript |
-| **Elicitation** | Elicitation Specialist | Generate clarifying open questions |
-| **Deep Authoring** | SRS Writer, Domain Modeler, UML Architect | Produce full SRS, domain model, and diagrams |
-| **QA Review** | Requirements Reviewer | Critic pass — find gaps, contradictions, untestable items |
-| **Proxy Review** | Client Proxy | Simulate client objections against extracted personas |
-| **Research** | Web Researcher | Ground requirements with compliance/domain context |
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.10–3.13
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
-- An LLM API key (Gemini, OpenAI, Anthropic, etc.)
-
-### Install
-
-```bash
-git clone https://github.com/RolexAlexander/plinth.git
-cd plinth
-uv sync
-```
-
-### Configure
-
-```bash
-# Copy the example env and add your API key
-cp .env.example .env
-```
-
-```env
-GEMINI_API_KEY=your-key-here
-```
-
-Customize behavior in [`config.yaml`](config.yaml):
-
-```yaml
-llm:
-  default_model: "gemini/gemini-3.5-flash"
-
-actor_critic:
-  max_rounds: 3
-
-validation:
-  orphan_check: warn   # warn | fail
-```
-
-### Run
-
-```bash
-# Run with the sample transcript
-uv run kickoff
-
-# Run with your own transcript
-uv run kickoff path/to/your/transcript.txt
-```
-
-### Docker
-
-```bash
-# Build
-docker build -t plinth .
-
-# Run (mount your transcript and collect output)
-docker run --rm \
-  --env-file .env \
-  -v ./my_transcript.txt:/app/tests/sample_transcript.txt \
-  -v ./output:/app/output \
-  plinth
-```
-
-Or use Docker Compose:
-
-```bash
-docker compose run --rm plinth
-```
-
-## 📦 Output
-
-After a successful run, the `output/` directory contains:
-
-| File | Description |
-|---|---|
-| `srs.md` | Full Software Requirements Specification |
-| `requirements.json` | Structured requirements with status, priority, acceptance criteria |
-| `open_questions.md` | Unresolved questions with proposed assumptions |
-| `personas.md` | Extracted stakeholder personas |
-| `domain_model.json` | Domain entities and relationships |
-| `traceability.md` | Cross-reference matrix |
-| `uml/*.mmd` | Mermaid diagrams (use case, sequence, activity) |
-| `handoff_manifest.json` | Machine-readable readiness summary |
-
-## 🧪 Testing
-
-```bash
-# Run all tests (no LLM required for M0–M2 tests)
-uv run pytest tests/ -v
-
-# Run with coverage
-uv run pytest tests/ --cov=requirements_crew --cov-report=term-missing
-```
-
-## 🗂️ Project Structure
-
-```
-plinth/
-├── config.yaml              # Runtime configuration
-├── pyproject.toml            # Project metadata & dependencies
-├── Dockerfile                # Container image
-├── docker-compose.yml        # Compose orchestration
-├── tests/
-│   ├── sample_transcript.txt # Example stakeholder interview
-│   └── test_*.py             # Deterministic test suite
-└── src/requirements_crew/
-    ├── main.py               # CLI entrypoint
-    ├── settings.py           # Config loader
-    ├── models/               # Pydantic models (R1–R5 validators)
-    │   ├── package.py        # Core domain types
-    │   └── outputs.py        # Crew output wrappers
-    ├── agents/               # Agent definitions (YAML)
-    ├── tasks/                # Task definitions (YAML)
-    ├── crews/                # Crew wiring
-    ├── flow/                 # Flow orchestration
-    │   └── requirements_flow.py
-    ├── validation/           # Package integrity checks
-    ├── packaging/            # Output rendering & export
-    └── tools/                # Custom CrewAI tools
-```
-
-## 🔧 Configuration Reference
-
-| Key | Default | Description |
-|---|---|---|
-| `llm.default_model` | `gemini/gemini-3.5-flash` | LLM for all agents |
-| `llm.render_model` | `gemini/gemini-3.5-flash` | LLM for rendering tasks |
-| `client_proxy.mode` | `auto` | `on` / `off` / `auto` — controls proxy critic |
-| `actor_critic.max_rounds` | `3` | Max deep-authoring revision loops |
-| `research.enabled` | `true` | Enable web research grounding |
-| `validation.orphan_check` | `warn` | `warn` or `fail` on orphan requirements |
-
-## 📜 License
-
-[MIT](LICENSE) — use it, fork it, build on it.
+*LLMs reason, but deterministic Python code enforces.*
 
 ---
 
+## 1. Multi-Agent Architecture
+Plinth runs on the Google Agent Development Kit (ADK) framework using a `SequentialAgent` spine:
+
+```mermaid
+graph TD
+    A[Start: Transcript] --> B[Intake Agent]
+    B -->|Unpack Intake| C[Requirements Agent]
+    C -->|Grounding Callback| D[Authoring Loop]
+    D -->|SRS Writer <--> QA Critic| E[Elicitation Agent]
+    E -->|Human Gate / request_input| F[User Story Agent]
+    F -->|Coverage Callback| G[Package Agent]
+    G -->|finalize_package Tool| H[Output Artifacts]
+```
+
+* **Intake Agent (`gemini-2.5-flash`)**: Extracts high-level project metadata, verbatim stakeholder statements, and user personas.
+* **Requirements Agent (`gemini-2.5-pro`)**: Compiles stakeholder statements into traceable requirements (`REQ-xxx`).
+* **Authoring Loop (`LoopAgent`)**:
+  * **SRS Writer (`gemini-2.5-flash`)**: Refines requirements based on review feedback.
+  * **QA Critic (`gemini-2.5-pro`)**: Audits specifications for ambiguity and contradiction, appending findings as open questions.
+* **Elicitation Agent (`gemini-2.5-pro`)**: Acts as the human gate, pausing execution via `request_input` if blocking open questions remain and resolving them with user answers.
+* **User Story Agent (`gemini-2.5-flash`)**: Formats requirements into functional user stories (`US-xxx`).
+* **Package Agent (`gemini-2.5-flash`)**: Deterministically compiles and writes the package deliverables.
+
+All agents share a common `session.state` scratchpad and use `after_agent_callback` handlers to enforce data integrity.
+
+---
+
+## 2. Setup
+1. **Python Version**: Python `>=3.11` and `<3.14`.
+2. **Install dependencies**:
+   ```bash
+   pip install -e .
+   ```
+3. **Configure Environment**:
+   Copy `.env.example` to `.env` and fill in your keys:
+   ```bash
+   GEMINI_API_KEY=your_gemini_api_key
+   # Set to FALSE to bypass Vertex AI cloud routing and use the direct Gemini API Key
+   GOOGLE_GENAI_USE_VERTEXAI=FALSE
+   ```
+
+---
+
+## 3. Run and Debug
+- **Run local server & CLI playground**:
+  Launch the local interactive UI (web UI, event graphs, and artifact inspector):
+  ```bash
+  agents-cli playground
+  # Or: adk web
+  ```
+- **CLI Run**:
+  Run a one-shot execution from the command line:
+  ```bash
+  agents-cli run "Generate requirements for SpinCycle"
+  # Or: adk run plinth_agent
+  ```
+- **Handoff Package Landing**:
+  All generated outputs are written to the `./output/` directory and registered as ADK artifacts.
+
+---
+
+## 4. SpinCycle Run Snapshot
+A typical run against the `sample_transcript.txt` stakeholder interview produces the following results:
+* **Requirements**: 67 discovered, with **65 confirmed and 100% verbatim-grounded** in the transcript text.
+* **User Stories**: 53 functional stories covering all `must` and `should` requirements.
+* **Coverage Ratio**: `0.90` (90% transcript coverage with honest `uncovered_topics`).
+* **Downstream Readiness**: Once all blocking open questions are cleared by the human gate, the manifest's `ready_for` capability lists `architecture_agent`, `backend_agent`, and other downstream builders.
+
+---
+
+## 5. Logo & Branding
 <div align="center">
-
-**Plinth** — because every great system starts with a solid foundation.
-
+<img src="docs/logo.png" alt="Plinth Logo" width="400" />
 </div>
+

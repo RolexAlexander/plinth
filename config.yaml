@@ -1,7 +1,6 @@
 llm:
-  # - Qwen 3.7 Plus: "openai/qwen3.7-plus" via DashScope compatible-mode API
-  default_model: "openai/qwen3.7-plus"
-  render_model: "openai/qwen3.7-plus"
+  default_model: "gemini/gemini-2.5-pro"
+  render_model: "gemini/gemini-2.5-flash"
 
 client_proxy:
   mode: auto                # on | off | auto

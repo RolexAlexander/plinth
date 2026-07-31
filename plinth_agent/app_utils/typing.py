@@ -12,24 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.12-slim
+import uuid
+from typing import (
+    Literal,
+)
 
-RUN pip install --no-cache-dir uv==0.8.13
+from pydantic import (
+    BaseModel,
+    Field,
+)
 
-WORKDIR /code
 
-COPY ./pyproject.toml ./README.md ./uv.lock* ./
+class Feedback(BaseModel):
+    """Represents feedback for a conversation."""
 
-COPY ./plinth_agent ./plinth_agent
-
-RUN uv sync --frozen
-
-ARG COMMIT_SHA=""
-ENV COMMIT_SHA=${COMMIT_SHA}
-
-ARG AGENT_VERSION=0.0.0
-ENV AGENT_VERSION=${AGENT_VERSION}
-
-EXPOSE 8080
-
-CMD ["uv", "run", "uvicorn", "plinth_agent.fast_api_app:app", "--host", "0.0.0.0", "--port", "8080"]
+    score: int | float
+    text: str | None = ""
+    log_type: Literal["feedback"] = "feedback"
+    service_name: Literal["plinth"] = "plinth"
+    user_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
