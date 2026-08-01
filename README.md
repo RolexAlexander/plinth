@@ -1,12 +1,6 @@
-<div align="center">
-
-<img src="docs/logo.png" alt="Plinth Logo" width="220" />
-
 # 🏛️ Plinth — Requirements Discovery Agent (Google ADK Port)
 
 **Turns discovery into a foundation downstream agents can build on.**
-
-</div>
 
 
 ## The D differentiator: Anti-Hallucination & Provenance Integrity
@@ -87,10 +81,5 @@ A typical run against the `sample_transcript.txt` stakeholder interview produces
 * **Coverage Ratio**: `0.90` (90% transcript coverage with honest `uncovered_topics`).
 * **Downstream Readiness**: Once all blocking open questions are cleared by the human gate, the manifest's `ready_for` capability lists `architecture_agent`, `backend_agent`, and other downstream builders.
 
----
 
-## 5. Logo & Branding
-<div align="center">
-<img src="docs/logo.png" alt="Plinth Logo" width="400" />
-</div>
 
